@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.compose.multiplatform) apply false
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.metro) apply false
+    alias(libs.plugins.dependency.analysis) apply false
     alias(libs.plugins.buildkit.modules)
     alias(libs.plugins.buildkit.detekt)
 }

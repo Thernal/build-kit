@@ -1,5 +1,16 @@
 @file:Suppress("UnstableApiUsage")
 
+// `./gradlew create profile api impl` — Gradle would read `profile`, `api` and `impl` as task names.
+// Everything after `create` is handed to the task as its arguments instead. This has to happen here:
+// settings are evaluated before task names are resolved, and nothing later can take them back.
+run {
+    val taskNames = startParameter.taskNames
+    val createIndex = taskNames.indexOfFirst { it == "create" || it == ":create" }
+    if (createIndex < 0) return@run
+    startParameter.setTaskNames(taskNames.take(createIndex + 1))
+    System.setProperty("app.create.arguments", taskNames.drop(createIndex + 1).joinToString(" "))
+}
+
 pluginManagement {
     repositories {
         google()

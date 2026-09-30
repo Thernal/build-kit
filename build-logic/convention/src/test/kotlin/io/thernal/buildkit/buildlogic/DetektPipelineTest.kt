@@ -73,4 +73,12 @@ class DetektPipelineTest {
         assertEquals("[core]\n\thooksPath = .githooks\n", withHooksPath("[core]\n\thooksPath = hooks\n"))
         assertNull(withHooksPath("[core]\n\thooksPath = .githooks\n"))
     }
+
+    @Test
+    fun `the report merge driver is declared once`() {
+        val once = withReportMergeDriver("[core]\n\tbare = false")!!
+        assertTrue("[merge \"generated-report\"]" in once)
+        assertTrue("driver = true" in once)
+        assertNull(withReportMergeDriver(once))
+    }
 }

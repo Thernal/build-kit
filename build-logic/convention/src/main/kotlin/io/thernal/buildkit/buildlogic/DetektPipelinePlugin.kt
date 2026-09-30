@@ -129,37 +129,3 @@ private fun Task.annotateSources() = with(project) {
     byFile.forEach { (file, lines) -> file.writeText(annotate(file.readText(), lines)) }
     logger.lifecycle("detekt: ${byFile.values.sumOf { it.values.sumOf(Set<String>::size) }} marker(s) in ${byFile.size} file(s)")
 }
-
-/**
- * Points `core.hooksPath` at `.githooks` by editing Git's config file directly — no `git` process, so
- * it is safe during configuration and works from a linked worktree. Skipped on CI, where automated
- * commits record unresolved findings on purpose and must not be blocked.
- */
-internal fun installGitHooks(rootDirectory: File, isCi: Boolean) {
-    if (isCi || !rootDirectory.resolve(".githooks").isDirectory) return
-    val marker = rootDirectory.resolve(".git")
-    val gitDirectory = when {
-        marker.isDirectory -> marker
-        marker.isFile -> marker.readText().substringAfter("gitdir:", "").trim()
-            .takeIf(String::isNotEmpty)
-            ?.let { File(it).let { path -> if (path.isAbsolute) path else rootDirectory.resolve(it) } }
-        else -> null
-    } ?: return
-    val commonDirectory = gitDirectory.resolve("commondir").takeIf(File::isFile)
-        ?.readText()?.trim()?.takeIf(String::isNotEmpty)
-        ?.let { File(it).let { path -> if (path.isAbsolute) path else gitDirectory.resolve(it) } }
-        ?: gitDirectory
-    val config = commonDirectory.resolve("config").takeIf(File::isFile) ?: return
-    config.writeText(withHooksPath(config.readText()) ?: return)
-}
-
-/** [content] with `core.hooksPath = .githooks`, or null when it already says so. */
-internal fun withHooksPath(content: String): String? {
-    val pattern = Regex("""(?m)^(\s*hooksPath\s*=\s*)[^\r\n]*""", RegexOption.IGNORE_CASE)
-    val current = pattern.find(content)?.value?.substringAfter('=')?.trim()
-    return when {
-        current == ".githooks" -> null
-        current != null -> content.replace(pattern, "$1.githooks")
-        else -> content + (if (content.isEmpty() || content.endsWith('\n')) "" else "\n") + "[core]\n\thooksPath = .githooks\n"
-    }
-}

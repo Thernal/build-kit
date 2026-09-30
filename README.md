@@ -5,8 +5,8 @@ environment flavors, signing, and — as the kit grows — the Detekt rules and 
 reports. An application takes it by copy (`skillctl.sh kit install build-kit`), renamed to its own
 package, and merges later changes in; nothing here is published as a library.
 
-**Status:** convention plugins, flavors and the Detekt workflow are in place and proven by
-`fixture/`. The module tasks, reports, scripts, docs, skills and `kit.yml` follow.
+**Status:** conventions, flavors, the Detekt workflow, module tooling, reports and scripts are in
+place and proven by `fixture/`. Full docs, skills and `kit.yml` follow.
 
 ## Conventions
 
@@ -18,7 +18,8 @@ package, and merges later changes in; nothing here is published as a library.
 | `kotlin.library` | a plain Kotlin/JVM module (tools, generators) |
 | `android.application` | an Android app (`apps/<name>`): the `environment` flavors, per-flavor version codes, shared debug and production release signing |
 | `environment` | generates `Environment` in `commonMain` from `.env.<active flavor>` |
-| `modules` | root project only: rejects any `api(...)` dependency, except the modules exported into the iOS framework and listed in `app.api.allowed` |
+| `modules` | root project only: rejects any `api(...)` dependency except those in `app.api.allowed` (iOS framework exports); `create`, `graph`, `composeStabilityReport`; dependency-analysis when the root declares it |
+| `detekt` | root project only: the Detekt pipeline tasks and the Git hooks |
 
 ## Flavors
 
@@ -42,6 +43,25 @@ Every module gets Detekt with the custom rules in `build-logic/detekt-rules` and
 
 `./gradlew detektFull` does the same for the whole repository and replaces the report. The hook is
 installed by the first Gradle sync (`core.hooksPath = .githooks`), except on CI.
+
+## Module tooling and reports
+
+| Command | Does |
+|---|---|
+| `./gradlew create profile api impl wiring` | scaffolds `features/profile/{api,impl,wiring}` — multiplatform modules, sibling dependencies, a Metro binding container in `wiring` |
+| `./gradlew graph` | writes `report/`: module health verdicts, build waves, dependency graphs, coupling metrics |
+| `./gradlew assembleDevDebug -PcomposeStabilityReport=true composeStabilityReport` | writes `report/compose-stability.md` |
+| `./gradlew buildHealth` | dependency-analysis advice (never fails) |
+
+`app.modules.root` and `app.modules.areas` say where modules live. `report/*.md` merges with a
+driver that keeps one side, and `.githooks/post-merge` regenerates the report afterwards.
+
+## Scripts, make and fastlane
+
+`make build-android APP=customer FLAVOR=beta`, `make build-ios-framework`, `make verify-android-release`,
+`make test`, … — flavors and apps are read from `gradle.properties`. `scripts/bump-version-code.sh
+<app> <flavor>`, `scripts/deeplink.sh <url> [app] [flavor]` (or `--ios <url>`). `fastlane/Fastfile`
+has the store lanes (Play, TestFlight); Firebase distribution belongs to firebase-kit.
 
 ## Building
 

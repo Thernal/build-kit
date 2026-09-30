@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# The module report is generated from the build files, so after a merge it is stale by definition:
+# the merge driver resolved it to one side without looking at the other. Regenerate it from the
+# merged build files and stage it, so the next commit carries a report that matches its modules.
+#
+# It cannot go into the merge commit itself. Git fixes that commit's tree before it runs any hook:
+# staging from prepare-commit-msg is ignored, and `git commit --amend` from here is refused while
+# the merge is still in progress.
+
+set -uo pipefail
+
+# Git exports its own index into hooks; the report has to be staged into the real one.
+unset GIT_INDEX_FILE GIT_DIR GIT_WORK_TREE GIT_PREFIX GIT_OBJECT_DIRECTORY
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+
+CHANGED="$(git diff --name-only ORIG_HEAD HEAD 2>/dev/null || true)"
+if [ -z "$CHANGED" ]; then
+    exit 0
+fi
+
+if ! printf "%s\n" "$CHANGED" | grep -qE '(^|/)(build\.gradle\.kts|settings\.gradle\.kts)$|^gradle/libs\.versions\.toml$|^report/'; then
+    exit 0
+fi
+
+if ! "$PROJECT_ROOT/gradlew" -p "$PROJECT_ROOT" graph --quiet; then
+    echo "graph: regeneration failed; run ./gradlew graph before committing" >&2
+    exit 0
+fi
+
+if git -C "$PROJECT_ROOT" diff --quiet -- report; then
+    exit 0
+fi
+
+git -C "$PROJECT_ROOT" add -- report
+echo "graph: report/ regenerated from the merged build files and staged; commit it"

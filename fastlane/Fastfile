@@ -1,0 +1,66 @@
+# Store lanes: Google Play and TestFlight. Building is `make`'s job (see Makefile), so a lane only
+# builds through it and uploads; flavors and apps come from gradle.properties, as for the build.
+# Firebase App Distribution lanes belong to firebase-kit, not here.
+#
+#   bundle exec fastlane android play app:customer [track:internal]
+#   bundle exec fastlane ios testflight flavor:beta
+#
+# Credentials come from the environment and never from the repository:
+#   GOOGLE_PLAY_JSON_KEY            service-account JSON (content) for the Play Developer API
+#   IOS_BUNDLE_ID_<FLAVOR>          bundle id per flavor, e.g. IOS_BUNDLE_ID_BETA
+#   APP_STORE_CONNECT_API_KEY_PATH  App Store Connect API key (JSON) for upload and match
+#   MATCH_GIT_URL / MATCH_PASSWORD  match's certificate repository
+
+ROOT = File.expand_path("..", __dir__)
+
+def app_property(key)
+  File.readlines(File.join(ROOT, "gradle.properties"))
+      .map(&:strip)
+      .select { |line| line.start_with?("#{key}=") }
+      .map { |line| line.split("=", 2).last.strip }
+      .last
+end
+
+FLAVORS = app_property("app.flavors").to_s.split(",").map(&:strip)
+PRODUCTION = app_property("app.flavors.production") || FLAVORS.last
+ARTIFACTS = File.join(ROOT, ".misc/artifacts")
+
+def require_flavor(flavor)
+  UI.user_error!("Unknown flavor '#{flavor}'. Expected one of: #{FLAVORS.join(', ')}") unless FLAVORS.include?(flavor)
+  flavor
+end
+
+default_platform(:android)
+
+platform :android do
+  desc "Builds the production app bundle of an app and uploads it to a Play track"
+  lane :play do |options|
+    app = options[:app] || UI.user_error!("Pass app:<name>")
+    sh("cd #{ROOT} && make build-android APP=#{app} FLAVOR=#{PRODUCTION} BUILD_TYPE=release")
+    upload_to_play_store(
+      track: options[:track] || "internal",
+      aab: Dir[File.join(ARTIFACTS, "android", "#{app}-#{PRODUCTION}-release*.aab")].first,
+      json_key_data: ENV.fetch("GOOGLE_PLAY_JSON_KEY"),
+    )
+  end
+end
+
+platform :ios do
+  desc "Builds one flavor of the iOS app and uploads it to TestFlight"
+  lane :testflight do |options|
+    flavor = require_flavor(options[:flavor] || PRODUCTION)
+    configuration = "#{flavor.capitalize} Release"
+    api_key = app_store_connect_api_key(key_filepath: ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH"))
+
+    match(type: "appstore", app_identifier: ENV.fetch("IOS_BUNDLE_ID_#{flavor.upcase}"), readonly: true, api_key: api_key)
+    sh("cd #{ROOT} && make build-ios-framework FLAVOR=#{flavor} BUILD_TYPE=release")
+    build_app(
+      project: File.join(ROOT, "iosApp/iosApp.xcodeproj"),
+      scheme: "iosApp-#{flavor.capitalize}-Release",
+      configuration: configuration,
+      export_method: "app-store",
+      output_directory: File.join(ARTIFACTS, "ios"),
+    )
+    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
+  end
+end

@@ -16,6 +16,7 @@ dependencies {
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.compose.gradle.plugin)
     compileOnly(libs.compose.compiler.gradle.plugin)
+    compileOnly(libs.dependency.analysis.gradle.plugin)
     // implementation, not compileOnly: Detekt is applied by a convention rather than declared in the
     // application's root build, so it has to travel with build-logic.
     implementation(libs.detekt.gradle.plugin)
