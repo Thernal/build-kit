@@ -32,6 +32,17 @@ internal fun installReportMergeDriver(rootDirectory: File) {
     config.writeText(withReportMergeDriver(config.readText()) ?: return)
 }
 
+/**
+ * Makes the hooks and scripts executable again. A copy that goes through a text transformation — a kit
+ * install renaming the package — writes new files without the executable bit, and Git silently skips
+ * a hook that is not executable: the pre-commit check would simply never run.
+ */
+internal fun restoreExecutableBits(rootDirectory: File) {
+    val hooks = rootDirectory.resolve(".githooks").listFiles().orEmpty().filter(File::isFile)
+    val scripts = rootDirectory.resolve("scripts").listFiles().orEmpty().filter { it.isFile && it.extension == "sh" }
+    (hooks + scripts).filterNot(File::canExecute).forEach { it.setExecutable(true, false) }
+}
+
 /** [content] with `core.hooksPath = .githooks`, or null when it already says so. */
 internal fun withHooksPath(content: String): String? {
     val pattern = Regex("""(?m)^(\s*hooksPath\s*=\s*)[^\r\n]*""", RegexOption.IGNORE_CASE)

@@ -81,4 +81,20 @@ class DetektPipelineTest {
         assertTrue("driver = true" in once)
         assertNull(withReportMergeDriver(once))
     }
+
+    @Test
+    fun `hooks and scripts become executable again`() {
+        val root = kotlin.io.path.createTempDirectory("exec").toFile()
+        val hook = root.resolve(".githooks").apply { mkdirs() }.resolve("pre-commit").apply { writeText("#!/bin/sh") }
+        val script = root.resolve("scripts").apply { mkdirs() }.resolve("a.sh").apply { writeText("#!/bin/sh") }
+        val other = root.resolve("scripts/readme.txt").apply { writeText("x") }
+        listOf(hook, script, other).forEach { it.setExecutable(false, false) }
+
+        restoreExecutableBits(root)
+
+        assertTrue(hook.canExecute())
+        assertTrue(script.canExecute())
+        assertFalse(other.canExecute())
+        root.deleteRecursively()
+    }
 }

@@ -26,6 +26,7 @@ internal const val DETEKT_STALE_FILES_PROPERTY = "detektStaleReportFiles"
 class DetektPipelinePlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         if (this != rootProject) throw GradleException("io.thernal.buildkit.detekt must be applied to the root project.")
+        restoreExecutableBits(rootDir)
         installGitHooks(rootDir, isCi = providers.environmentVariable("CI").isPresent)
 
         val analyses = provider { subprojects.mapNotNull { it.tasks.findByName(DETEKT_ANALYSIS_TASK) } }
