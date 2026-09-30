@@ -45,7 +45,9 @@ extract_keys() {
     local filter_file=""
     if [ -n "$filter_csv" ]; then
         filter_file="$(mktemp)"
-        while IFS= read -r p; do
+        # `|| [ -n "$p" ]`: the list has no trailing newline, and `read` drops a last line without
+        # one — with a single changed file the filter would be empty and nothing would ever block.
+        while IFS= read -r p || [ -n "$p" ]; do
             [ -n "$p" ] || continue
             canonicalize_path "$p" >>"$filter_file"
         done < <(printf "%s" "$filter_csv" | tr ',' '\n')
