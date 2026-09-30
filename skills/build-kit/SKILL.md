@@ -17,7 +17,7 @@ Most mistakes here add a second mechanism beside one build-kit already has. Look
 
 ```sh
 grep -n '^app\.' gradle.properties                          # flavors, namespace, module areas, api exceptions
-grep -rn 'libs.plugins.buildkit' --include=build.gradle.kts . | sed 's/:.*alias/ alias/' | sort | uniq -c | sort -rn | head
+grep -rn 'libs.plugins.buildkit.' --include=build.gradle.kts . | sed 's/:.*alias/ alias/' | sort | uniq -c | sort -rn | head
 ls apps/ .env.* 2>/dev/null                                  # applications and environment files
 grep -n 'build-kit\|app-settings' settings.gradle.kts        # module discovery comes from gradle/app-settings.gradle.kts
 ls report/ 2>/dev/null; git config core.hooksPath            # reports present? hook installed (.githooks)?

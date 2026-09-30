@@ -3,8 +3,10 @@ package io.thernal.buildkit.buildlogic
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 /** Set to `true` by whoever wants compiler metrics for the stability report; off otherwise. */
 internal const val STABILITY_REPORT_PROPERTY = "composeStabilityReport"
@@ -52,6 +54,15 @@ internal fun Project.configureComposeCompiler() {
         if (reportsEnabled) {
             metricsDestination.set(layout.buildDirectory.dir("compose-metrics"))
             reportsDestination.set(layout.buildDirectory.dir("compose-reports"))
+        }
+    }
+    if (reportsEnabled) {
+        // The destinations are not inputs of the compile tasks, so an unchanged module would stay
+        // up to date (or come from the build cache) and write no metrics at all. A report run
+        // recompiles the module's Kotlin instead — it is rare, and it is the point of the run.
+        tasks.withType<KotlinCompilationTask<*>>().configureEach {
+            outputs.upToDateWhen { false }
+            outputs.doNotCacheIf("Compose compiler metrics were requested") { true }
         }
     }
     registerModuleStabilityReport()
