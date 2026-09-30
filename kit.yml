@@ -1,0 +1,61 @@
+# What an application takes from build-kit, and how. Read by `skillctl.sh kit …`
+# (the skill-manager skill in github.com/Thernal/knowledge), which parses it with
+# sed and awk — so keep to this shape: `key: value` scalars, `key:` followed by
+# `  - item` lines, `#` comments. No nesting, no quoting, no inline lists.
+#
+# An application does not depend on build-kit: it copies the `code` parts into
+# its own tree, renamed to its own package and plugin alias, and skill-manager
+# records where the copy came from so every later change here can be offered to
+# it — merged three ways, so edits made in the application survive.
+
+name: build-kit
+
+# Rename points. There is no `module`: the code parts are build tooling at fixed
+# paths (build-logic/, config/, …), not Gradle modules under a path prefix.
+#   package  plugin ids, build-logic's sources and groups, the Detekt rules' prefix
+#   alias    libs.plugins.<alias>. in the copied files
+package: io.thernal.buildkit
+alias: buildkit
+
+# Copied into the application and merged on update.
+code:
+  - build-logic
+  - config/detekt
+  - gradle/app-settings.gradle.kts
+  - .githooks
+  - scripts
+  - Makefile
+  - fastlane
+
+# The public contract: the conventions' and rules' sources and the settings
+# script. When they move and `skill` has not moved since, the skill is reported
+# as behind.
+surface:
+  - build-logic/convention/src/main
+  - build-logic/detekt-rules/src/main
+  - gradle/app-settings.gradle.kts
+
+# Installed into the application's skills directory, renamed like the code.
+skill:
+  - skills/build-kit
+
+# Never copied. A change here is announced on update and read in place.
+docs:
+  - README.md
+  - build-logic/README.md
+  - skills/build-kit/references/setup.md
+
+# What the copied code expects the application to provide. Shown at install and
+# whenever these lines change; never written into the application's files.
+# skills/build-kit/references/setup.md has every item written out.
+requires:
+  - settings enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS") and apply(from = "gradle/app-settings.gradle.kts"); no include(...) list, no other includeBuild("build-logic")
+  - root build plugins apply false android-kotlin-multiplatform-library, android-application, kotlin-multiplatform, kotlin-jvm, compose-multiplatform, compose-compiler, metro (dependency-analysis optional)
+  - root build alias(libs.plugins.<alias>.modules) and alias(libs.plugins.<alias>.detekt), and a test task depending on build-logic's :convention:test and :detekt-rules:test
+  - catalog versions kotlin, jvm (17), agp, android-compile-sdk, android-target-sdk, android-min-sdk, compose-multiplatform, kotlinx-coroutines, metro, detekt, junit4 (dependency-analysis optional)
+  - catalog libraries android-gradle-plugin, kotlin-gradle-plugin, compose-gradle-plugin, compose-compiler-gradle-plugin, detekt-gradle-plugin, detekt-api, detekt-test, detekt-ktlint-wrapper, dependency-analysis-gradle-plugin, kotlin-test, kotlinx-coroutines-test, compose-runtime, compose-foundation, compose-ui, metro-runtime, junit4
+  - catalog plugins <alias>-kmp-library, <alias>-compose, <alias>-injection, <alias>-kotlin-library, <alias>-android-application, <alias>-environment, <alias>-modules, <alias>-detekt — ids <package>.kmp.library and so on
+  - gradle.properties app.namespace, app.flavors (at least two, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas
+  - files .env.<flavor> per flavor at the root; gradle/gradle-daemon-jvm.properties with toolchainVersion=21 (Metro's Gradle plugin)
+  - .gitattributes report/**/*.md merge=generated-report; .gitignore .misc/ and config/signing/release/
+  - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/version.properties, config/compose/stability.conf, a Gemfile with fastlane

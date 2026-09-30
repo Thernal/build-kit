@@ -8,8 +8,11 @@ internal const val MODULES_AREAS_PROPERTY = "app.modules.areas"
 
 internal const val DEFAULT_MODULE_AREAS = "apps,core,designsystem,features"
 
-/** The plugin alias prefix generated build files use (`libs.plugins.buildkit.kmp.library`). */
-private const val PLUGIN_ALIAS = "buildkit"
+/**
+ * The plugin accessor prefix generated build files use. Written out whole, so a kit install's alias
+ * rename (`libs.plugins.<alias>.`) reaches it.
+ */
+private const val PLUGIN_ACCESSOR = "libs.plugins.buildkit."
 
 /** Where modules live: an optional root directory and the areas under it. */
 internal data class ModuleLayout(
@@ -80,7 +83,7 @@ internal object ModuleScaffold {
             .map { "implementation(${projectAccessor(featureSegments + it.directoryName)})" }
         return buildString {
             appendLine("plugins {")
-            kind.plugins.forEach { plugin -> appendLine("    alias(libs.plugins.$PLUGIN_ALIAS.$plugin)") }
+            kind.plugins.forEach { plugin -> appendLine("    alias($PLUGIN_ACCESSOR$plugin)") }
             appendLine("}")
             if (dependencies.isNotEmpty()) {
                 appendLine()

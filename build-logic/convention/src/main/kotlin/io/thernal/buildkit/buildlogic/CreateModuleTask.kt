@@ -83,7 +83,7 @@ abstract class CreateModuleTask : DefaultTask() {
             """
             |
             |Modules are discovered on the next configuration; check with ./gradlew projects.
-            |They are plain multiplatform modules: add Compose (libs.plugins.$ALIAS.compose) or anything
+            |They are plain multiplatform modules: add Compose (libs.plugins.buildkit.compose) or anything
             |else in the build file when the module needs it, and declare dependencies with
             |implementation(...) — api(...) is rejected.
             """.trimMargin(),
@@ -104,7 +104,6 @@ abstract class CreateModuleTask : DefaultTask() {
 
     private companion object {
         const val BUILD_FILE = "build.gradle.kts"
-        const val ALIAS = "buildkit"
         val SOURCE_SETS = listOf("commonMain", "commonTest")
     }
 }

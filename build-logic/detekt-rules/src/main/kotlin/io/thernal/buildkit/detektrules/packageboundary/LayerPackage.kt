@@ -32,7 +32,9 @@ internal data class ModuleLayer(val moduleRoot: String, val layer: Layer)
 // depth, and a segment named `api` further down belongs to a layer's contents rather than to
 // another module. `wiring` modules match nothing here and are therefore exempt from both rules:
 // a binding container is neither data, domain, nor presentation.
-private val moduleRootPattern = Regex("""^(io\.thernal\.buildkit\.(?:[^.]+\.)*?(?:api|impl))(?:\.(.+))?$""")
+// The prefix is a plain string, not part of the pattern, so a kit install's package rename reaches it.
+private const val ROOT_PACKAGE = "io.thernal.buildkit"
+private val moduleRootPattern = Regex("""^(${Regex.escape(ROOT_PACKAGE)}\.(?:[^.]+\.)*?(?:api|impl))(?:\.(.+))?$""")
 
 internal fun String.toModulePackage(): ModulePackage? {
     val match = moduleRootPattern.find(this) ?: return null
