@@ -11,7 +11,9 @@ Config: `config/detekt/detekt.yml`. Rules: Detekt's own, ktlint, and `build-logi
 | `PreviewMustBePrivate` | `@Preview` functions are private |
 | `UnsafeCollectionIndexAccess` | `list[i]` / `array[i]` can throw — use `getOrNull(i)` unless the bounds are proven |
 
-`wiring` modules are exempt from the layer rules.
+`wiring` modules are exempt from the layer rules. Modules a kit installed (`map module` in `kits.lock`)
+are not analysed at all — the kit's own build checks them, and markers in them would conflict with every
+`kit update`.
 
 ## The workflow
 

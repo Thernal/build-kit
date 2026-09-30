@@ -74,6 +74,8 @@ internal class QualityConventionPlugin : Plugin<Project> {
             group = "verification"
             description = "Runs every Detekt task whose findings the pre-commit hook and detektFull count."
         }
+        // Code a kit installed counts for nothing here (see isKitModule): its analysis task stays empty.
+        if (isKitModule()) return@with
         pluginManager.withPlugin("org.jetbrains.kotlin.multiplatform") {
             analysis.configure { dependsOn(tasks.withType<Detekt>().matching { isCountedMultiplatformAnalysis(it.name) }) }
         }

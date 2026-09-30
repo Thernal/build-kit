@@ -68,6 +68,10 @@ types: the Android compilations cover common and Android code, and source-set ta
 Android compilation sees — the iOS source sets. An application module has no task that sees `src/main`
 except the plain one, which it uses.
 
+Modules another kit installed are skipped: the kit's own, stricter build checks that code, the
+application does not edit it, and a marker written into it is a local edit that turns the next
+`kit update` into a conflict. `kits.lock` says which modules those are.
+
 The root tasks and the hook installation live in build-logic rather than in `gradle/*.gradle.kts`
 scripts, so they are copied and updated with the kit instead of drifting in each application.
 

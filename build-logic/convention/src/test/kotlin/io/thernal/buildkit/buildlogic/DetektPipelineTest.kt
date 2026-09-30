@@ -97,4 +97,24 @@ class DetektPipelineTest {
         assertFalse(other.canExecute())
         root.deleteRecursively()
     }
+
+    @Test
+    fun `kit modules come from the lock's module maps`() {
+        val lock = """
+            [storage-kit]
+            map package io.thernal.storagekit com.example.app
+            map module :storage :core:storage
+            map alias storagekit app
+            [build-kit]
+            map package io.thernal.buildkit com.example.app
+        """.trimIndent()
+        val paths = kitModulePaths(lock)
+
+        assertEquals(setOf(":core:storage"), paths)
+        assertTrue(isKitModule(":core:storage:impl", paths))
+        assertTrue(isKitModule(":core:storage", paths))
+        assertFalse(isKitModule(":core:storagex:impl", paths))
+        assertFalse(isKitModule(":features:profile:impl", paths))
+        assertEquals(emptySet(), kitModulePaths(null))
+    }
 }

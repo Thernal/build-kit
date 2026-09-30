@@ -121,6 +121,9 @@ Every module runs Detekt with `config/detekt/detekt.yml` and the rules in `build
 `./gradlew detektFull` does the same for the whole repository. The first Gradle sync points Git at
 `.githooks/` (not on CI).
 
+Code another kit installed (the module paths in `kits.lock`) is not analysed: that kit's own build holds
+it to its rules, and markers written into it would turn every kit update into a merge conflict.
+
 ## Module tooling and reports
 
 | Command | Does |
