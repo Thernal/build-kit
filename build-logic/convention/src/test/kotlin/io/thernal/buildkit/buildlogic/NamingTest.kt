@@ -17,4 +17,10 @@ class NamingTest {
         listOf("api", "commonMainApi", "iosMainApi", "debugApi", "compileOnlyApi").forEach { assertTrue(isApiConfiguration(it), it) }
         listOf("implementation", "apiElements", "commonMainImplementation", "kapt").forEach { assertFalse(isApiConfiguration(it), it) }
     }
+
+    @Test
+    fun `the api allow-list is a comma-separated set`() {
+        assertEquals(setOf(":core:firebase", "com.example:bridge"), parseAllowedApi(" :core:firebase, com.example:bridge ,"))
+        assertEquals(emptySet(), parseAllowedApi(null))
+    }
 }

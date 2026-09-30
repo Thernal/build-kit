@@ -7,12 +7,16 @@ plugins {
 
 kotlin {
     // The framework the iOS application embeds; build-kit names it `FixtureShared` and makes it static.
-    listOf(iosArm64(), iosSimulatorArm64()).forEach { target -> target.binaries.framework {} }
+    // `Greeter` is exported so Swift can implement or call it — the one case `api(...)` is allowed,
+    // through `app.api.allowed` in gradle.properties.
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework { export(projects.fixture.features.greeting.api) }
+    }
 
     sourceSets {
         commonMain.dependencies {
             implementation(projects.fixture.core.config)
-            implementation(projects.fixture.features.greeting.api)
+            api(projects.fixture.features.greeting.api)
             implementation(projects.fixture.features.greeting.impl)
             implementation(projects.fixture.features.greeting.wiring)
             // Resolved per invocation: absent from a production build's classpath altogether.

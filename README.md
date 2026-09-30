@@ -18,7 +18,7 @@ module tasks, reports, scripts, docs, skills and `kit.yml` follow.
 | `kotlin.library` | a plain Kotlin/JVM module (tools, generators) |
 | `android.application` | an Android app (`apps/<name>`): the `environment` flavors, per-flavor version codes, shared debug and production release signing |
 | `environment` | generates `Environment` in `commonMain` from `.env.<active flavor>` |
-| `modules` | root project only: rejects any `api(...)` dependency |
+| `modules` | root project only: rejects any `api(...)` dependency, except the modules exported into the iOS framework and listed in `app.api.allowed` |
 
 ## Flavors
 
