@@ -28,3 +28,8 @@ DerivedData/
 
 # Production signing material never enters the repository (build-logic/…/Signing.kt)
 config/signing/release/
+
+# Store credentials live outside the repository; only the example is committed
+fastlane/.env
+fastlane/.env.*
+!fastlane/.env.example

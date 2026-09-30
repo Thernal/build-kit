@@ -22,6 +22,7 @@ alias: buildkit
 code:
   - build-logic
   - config/detekt
+  - config/signing/keystore.properties.example
   - gradle/app-settings.gradle.kts
   - .githooks
   - scripts

@@ -45,12 +45,12 @@ The same by hand, from a clone of this repository.
 
    ```sh
    # in the app, after copying — perl, so it runs the same on macOS and Linux
-   grep -rlI -e io.thernal.buildkit -e io/thernal/buildkit -e plugins.buildkit. .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts \
+   grep -rlI -e io.thernal.buildkit -e io/thernal/buildkit -e plugins.buildkit. .githooks Makefile build-logic config/detekt config/signing/keystore.properties.example fastlane gradle/app-settings.gradle.kts scripts \
      | xargs perl -pi -e 's/\Qio.thernal.buildkit\E/com.example.app/g; s{\Qio/thernal/buildkit\E}{com/example/app}g; s/libs\.plugins\.\Qbuildkit\E\./libs.plugins.app./g'
-   find .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts -depth -type d -path '*/io/thernal/buildkit' | while read -r d; do
+   find .githooks Makefile build-logic config/detekt config/signing/keystore.properties.example fastlane gradle/app-settings.gradle.kts scripts -depth -type d -path '*/io/thernal/buildkit' | while read -r d; do
      mkdir -p "${d%/io/thernal/buildkit}/com/example" && mv "$d" "${d%/io/thernal/buildkit}/com/example/app"
    done
-   find .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts -depth -type d -empty -delete
+   find .githooks Makefile build-logic config/detekt config/signing/keystore.properties.example fastlane gradle/app-settings.gradle.kts scripts -depth -type d -empty -delete
    ```
 
 3. **Provide** what the copy expects — the `requires` list in [`kit.yml`](kit.yml): settings, the root build file, the version catalog and `gradle.properties` keys — [`skills/build-kit/references/setup.md`](skills/build-kit/references/setup.md) walks through them, and `fixture/` is a working example.
@@ -179,6 +179,13 @@ bundle exec fastlane ios testflight flavor:beta
 
 All of them read flavors and apps from `gradle.properties`. Firebase App Distribution is not here —
 it belongs to firebase-kit.
+
+Credentials never enter the repository; examples of their shape do:
+
+| Example | Real file | Holds |
+|---|---|---|
+| `fastlane/.env.example` | `fastlane/.env` (git-ignored), or CI variables | the store lanes' Play key, App Store Connect key, bundle ids, match |
+| `config/signing/keystore.properties.example` | `config/signing/debug/keystore.properties` (committed, with the shared debug keystore) and `config/signing/release/keystore.properties` (git-ignored; CI writes it) | the keystore file, alias and passwords |
 
 ## This repository
 
