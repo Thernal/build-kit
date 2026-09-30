@@ -97,4 +97,4 @@ An application's copy is renamed textually: the package prefix, `libs.plugins.<a
 So everything a rename must reach is written out whole — the Detekt rules' package prefix is a plain
 string, not a regex fragment; generated build files use a literal `libs.plugins.buildkit.` prefix — and
 everything that must *not* be renamed avoids those strings: the properties are `app.*`, never
-`buildkit.*`.
+named after the kit.
