@@ -1,7 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
 pluginManagement {
-    includeBuild("build-logic")
     repositories {
         google()
         mavenCentral()
@@ -23,6 +22,11 @@ dependencyResolutionManagement {
 
 rootProject.name = "build-kit"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
+// At the top level, not in pluginManagement: besides the convention plugins, build-logic supplies the
+// custom Detekt rules as a dependency (`io.thernal.buildkit.buildlogic:detekt-rules`), and only a
+// top-level included build substitutes dependencies.
+includeBuild("build-logic")
 
 // Every directory under the given root that carries a build file is a module. Adding one is
 // creating the directory — there is no list here to keep in sync with the tree.

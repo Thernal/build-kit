@@ -83,3 +83,4 @@ buildkit-kotlin-library = { id = "io.thernal.buildkit.kotlin.library" }
 buildkit-android-application = { id = "io.thernal.buildkit.android.application" }
 buildkit-environment = { id = "io.thernal.buildkit.environment" }
 buildkit-modules = { id = "io.thernal.buildkit.modules" }
+buildkit-detekt = { id = "io.thernal.buildkit.detekt" }

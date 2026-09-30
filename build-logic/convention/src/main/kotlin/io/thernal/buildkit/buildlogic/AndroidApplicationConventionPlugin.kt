@@ -26,6 +26,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         // itself, and applying the standalone plugin on top of it is an error.
         pluginManager.apply("com.android.application")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+        QualityConventionPlugin().apply(target)
         configureComposeCompiler()
 
         val catalog = libs

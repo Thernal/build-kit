@@ -27,3 +27,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "build-logic"
 include(":convention")
+include(":detekt-rules")

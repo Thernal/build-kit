@@ -5,8 +5,8 @@ environment flavors, signing, and — as the kit grows — the Detekt rules and 
 reports. An application takes it by copy (`skillctl.sh kit install build-kit`), renamed to its own
 package, and merges later changes in; nothing here is published as a library.
 
-**Status:** convention plugins and flavors are in place and proven by `fixture/`. Detekt, the
-module tasks, reports, scripts, docs, skills and `kit.yml` follow.
+**Status:** convention plugins, flavors and the Detekt workflow are in place and proven by
+`fixture/`. The module tasks, reports, scripts, docs, skills and `kit.yml` follow.
 
 ## Conventions
 
@@ -29,6 +29,19 @@ for **one** flavor, chosen in this order: `-Papp.env`, the requested variant tas
 (`assembleBetaDebug`), Xcode's `CONFIGURATION`, `app.env` in `local.properties`,
 `app.flavors.default`. Flavor-scoped shared dependencies:
 `flavorImplementation("regress", …)`, `productionImplementation(…)`, `nonProductionImplementation(…)`.
+
+## Detekt
+
+Every module gets Detekt with the custom rules in `build-logic/detekt-rules` and
+`config/detekt/detekt.yml`. Findings never fail the build; the pre-commit hook decides:
+
+1. It analyses the changed Kotlin files (`detektAnalysis`, ktlint auto-correct on).
+2. A finding that is not yet in `.misc/detekt/detekt-report.xml` **blocks the commit** — and is merged
+   into that report and marked in the source as `// TODO: Detekt [Rule: message]`.
+3. Committing again passes: the findings are known now, and stay marked until someone fixes them.
+
+`./gradlew detektFull` does the same for the whole repository and replaces the report. The hook is
+installed by the first Gradle sync (`core.hooksPath = .githooks`), except on CI.
 
 ## Building
 

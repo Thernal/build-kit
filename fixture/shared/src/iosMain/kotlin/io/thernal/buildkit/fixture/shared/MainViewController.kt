@@ -5,4 +5,7 @@ import platform.UIKit.UIViewController
 
 private val graph: FixtureGraph by lazy { createFixtureGraph() }
 
-fun MainViewController(appName: String): UIViewController = ComposeUIViewController { FixtureApp(graph, appName) }
+@Suppress("FunctionNaming") // The name Swift calls; iOS entry points are conventionally capitalised.
+fun MainViewController(appName: String): UIViewController {
+    return ComposeUIViewController { FixtureApp(graph, appName) }
+}

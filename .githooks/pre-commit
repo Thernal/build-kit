@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+
+# Runs Detekt only against changed Kotlin sources. Auto-correct happens before the remaining
+# findings are evaluated; files that were staged before the hook are staged again afterwards so
+# formatting fixes become part of the same commit. Unstaged files are never staged by this hook.
+#
+# Blocking is decided against a persisted baseline (.misc/detekt/detekt-report.xml), not against
+# raw Detekt output: Detekt itself never fails the build (ignoreFailures=true, see
+# QualityConventionPlugin). Only violations this commit newly introduces — not present for that
+# file+rule in the baseline before this run — block the commit. Everything else gets annotated
+# with a "// TODO: Detekt [...]" marker and merged into the baseline, so it stops blocking future
+# commits until someone actually fixes it. The run that blocks has already merged them, so the same
+# commit, made again, passes — with its findings marked in the source for later.
+#
+# Installed by build-kit's detekt plugin (core.hooksPath = .githooks) on the first Gradle sync.
+
+set -euo pipefail
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+BASELINE_XML="$PROJECT_ROOT/.misc/detekt/detekt-report.xml"
+
+# ── Helper: canonicalize a path the same way the Gradle-side merge task does ─────────────────
+canonicalize_path() {
+    local input="$1"
+    local dir base
+    dir="$(dirname "$input")"
+    base="$(basename "$input")"
+    if [ -d "$dir" ]; then
+        printf "%s/%s\n" "$(cd "$dir" && pwd -P)" "$base"
+    else
+        printf "%s\n" "$input"
+    fi
+}
+
+# ── Helper: extract "path::Rule" keys from a checkstyle-style XML report ─────────────────────
+# Emits one line per violation instance (not deduplicated) so callers can compare *counts*,
+# not just presence — a file can carry several instances of the same rule, and a commit that
+# adds one more instance on top of already-baselined ones must still be treated as NEW.
+# Args: $1 = xml path, $2 = comma-separated absolute paths to filter to (optional)
+extract_keys() {
+    local xml="$1"
+    local filter_csv="${2:-}"
+    [ -f "$xml" ] || return 0
+
+    local filter_file=""
+    if [ -n "$filter_csv" ]; then
+        filter_file="$(mktemp)"
+        while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            canonicalize_path "$p" >>"$filter_file"
+        done < <(printf "%s" "$filter_csv" | tr ',' '\n')
+    fi
+
+    awk '
+        {
+            if (match($0, /<file name="[^"]+"/)) {
+                current = substr($0, RSTART + 12, RLENGTH - 13)
+            }
+            if (match($0, /<error [^>]*>/) && current != "") {
+                src = ""
+                if (match($0, /source="[^"]*"/)) {
+                    src = substr($0, RSTART + 8, RLENGTH - 9)
+                }
+                rule = src
+                sub(/^.*\./, "", rule)
+                printf "%s\t%s\n", current, rule
+            }
+        }
+    ' "$xml" | while IFS=$'\t' read -r raw_path rule; do
+        [ -n "$raw_path" ] || continue
+        canon_path="$(canonicalize_path "$raw_path")"
+        if [ -n "$filter_file" ] && ! grep -Fqx "$canon_path" "$filter_file"; then
+            continue
+        fi
+        printf "%s::%s\n" "$canon_path" "$rule"
+    done | sort
+
+    [ -n "$filter_file" ] && rm -f "$filter_file"
+    return 0
+}
+
+to_abs_csv() {
+    local rel_paths="$1"
+    [ -n "$rel_paths" ] || return 0
+    awk -v root="$PROJECT_ROOT" 'NF { print root "/" $0 }' <<<"$rel_paths" | paste -sd, -
+}
+
+# ── 1. Collect changed .kt files (staged + unstaged), plus deleted/renamed-away paths ────────
+STAGED_KOTLIN="$({
+    git -C "$PROJECT_ROOT" diff --cached --name-only --diff-filter=ACMR
+} | grep '\.kt$' || true)"
+WORKTREE_KOTLIN="$({
+    git -C "$PROJECT_ROOT" diff --name-only --diff-filter=ACMR
+} | grep '\.kt$' || true)"
+CHANGED_KOTLIN="$(printf "%s\n%s\n" "$STAGED_KOTLIN" "$WORKTREE_KOTLIN" | awk 'NF' | sort -u)"
+
+STALE_KOTLIN="$(
+    git -C "$PROJECT_ROOT" diff --cached --name-status --diff-filter=DR | awk '
+        BEGIN { FS="\t" }
+        $1 ~ /^D/ { if ($2 ~ /\.kt$/) print $2 }
+        $1 ~ /^R/ { if ($2 ~ /\.kt$/) print $2 }
+    ' || true
+)"
+
+if [ -z "$CHANGED_KOTLIN" ] && [ -z "$STALE_KOTLIN" ]; then
+    echo "detekt: no changed Kotlin files; skipping"
+    exit 0
+fi
+
+CHANGED_KOTLIN_ABSOLUTE="$(to_abs_csv "$CHANGED_KOTLIN")"
+STALE_KOTLIN_ABSOLUTE="$(to_abs_csv "$STALE_KOTLIN")"
+
+# Delete/rename-only commit: nothing to analyze, just drop stale entries from the baseline.
+if [ -z "$CHANGED_KOTLIN" ]; then
+    echo "detekt: purging stale baseline entries for deleted/renamed files"
+    "$PROJECT_ROOT/gradlew" \
+        -p "$PROJECT_ROOT" \
+        -PdetektStaleReportFiles="$STALE_KOTLIN_ABSOLUTE" \
+        detektMergeDelta \
+        --no-configuration-cache \
+        --quiet
+    exit 0
+fi
+
+# ── 2. Snapshot the baseline for the changed files BEFORE this run ───────────────────────────
+BEFORE_KEYS="$(extract_keys "$BASELINE_XML" "$CHANGED_KOTLIN_ABSOLUTE")"
+
+STAGED_FILES="$(git -C "$PROJECT_ROOT" diff --cached --name-only)"
+
+echo "detekt: checking changed Kotlin files"
+
+set +e
+"$PROJECT_ROOT/gradlew" \
+    -p "$PROJECT_ROOT" \
+    -PdetektChangedFiles="$CHANGED_KOTLIN_ABSOLUTE" \
+    -PdetektAutoCorrect=true \
+    detektClearTodos detektAnalysis \
+    --continue \
+    --no-configuration-cache \
+    --quiet
+DETEKT_STATUS=$?
+set -e
+
+set +e
+"$PROJECT_ROOT/gradlew" \
+    -p "$PROJECT_ROOT" \
+    -PdetektChangedFiles="$CHANGED_KOTLIN_ABSOLUTE" \
+    -PdetektStaleReportFiles="$STALE_KOTLIN_ABSOLUTE" \
+    detektMergeDelta \
+    --no-configuration-cache \
+    --quiet
+MERGE_STATUS=$?
+set -e
+
+set +e
+"$PROJECT_ROOT/gradlew" \
+    -p "$PROJECT_ROOT" \
+    -PdetektChangedFiles="$CHANGED_KOTLIN_ABSOLUTE" \
+    detektAnnotate \
+    --no-configuration-cache \
+    --quiet
+ANNOTATE_STATUS=$?
+set -e
+
+# Auto-correct may update both staged and unstaged Kotlin files. Restore the original staging
+# boundary: only paths that were already staged are added back to the index.
+if [ -n "$STAGED_FILES" ]; then
+    while IFS= read -r path; do
+        [ -n "$path" ] && [ -f "$PROJECT_ROOT/$path" ] && git -C "$PROJECT_ROOT" add -- "$path"
+    done <<<"$STAGED_FILES"
+fi
+
+if [ "$DETEKT_STATUS" -ne 0 ] || [ "$MERGE_STATUS" -ne 0 ] || [ "$ANNOTATE_STATUS" -ne 0 ]; then
+    echo "detekt: commit blocked; the Detekt/Gradle run itself failed (see output above)"
+    exit 1
+fi
+
+# ── 3. Snapshot the baseline for the changed files AFTER this run, diff against BEFORE ───────
+# Comparison is by COUNT per "path::Rule", not mere presence: a file can carry several
+# instances of the same rule, and this commit may add one more on top of already-baselined
+# ones. Line numbers are intentionally not part of the key — auto-correct/annotation can shift
+# them for unrelated reasons — so an increase in a rule's count within a file is what "new"
+# means here.
+AFTER_KEYS="$(extract_keys "$BASELINE_XML" "$CHANGED_KOTLIN_ABSOLUTE")"
+NEW_KEYS="$(awk '
+    NR == FNR { before[$0]++; next }
+    { after[$0]++ }
+    END {
+        for (k in after) {
+            b = (k in before) ? before[k] : 0
+            if (after[k] > b) printf "%s\t%d\n", k, after[k] - b
+        }
+    }
+' <(echo "$BEFORE_KEYS") <(echo "$AFTER_KEYS") | sort)"
+
+if [ -n "$NEW_KEYS" ]; then
+    echo ""
+    echo "detekt: commit blocked; this commit introduces new violations (see file:line:col above):"
+    echo ""
+    while IFS=$'\t' read -r key extra_count; do
+        [ -z "$key" ] && continue
+        path="${key%%::*}"
+        rule="${key#*::}"
+        rel="${path#"$PROJECT_ROOT"/}"
+        printf "  • %-28s %s new in %s\n" "$rule" "$extra_count" "$rel"
+    done <<<"$NEW_KEYS"
+    echo ""
+    echo "detekt: fix these and re-commit. Pre-existing violations in these files were left as"
+    echo "        '// TODO: Detekt [...]' annotations and do not block this commit."
+    exit 1
+fi
+
+if [ -n "$AFTER_KEYS" ]; then
+    echo "detekt: no new violations; $(echo "$AFTER_KEYS" | grep -c .) pre-existing one(s) baselined and annotated"
+fi
+
+echo "detekt: changed Kotlin files are clean"

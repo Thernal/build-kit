@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.compose.compiler) apply false
     alias(libs.plugins.metro) apply false
     alias(libs.plugins.buildkit.modules)
+    alias(libs.plugins.buildkit.detekt)
 }
 
 // build-logic is an included build, so its tests are not reached by the main build's `test` on
@@ -16,8 +17,9 @@ plugins {
 // registering it on the root is enough.
 val buildLogicTest = tasks.register("buildLogicTest") {
     group = "verification"
-    description = "Runs the tests of build-logic's conventions."
+    description = "Runs the tests of build-logic's conventions and custom Detekt rules."
     dependsOn(gradle.includedBuild("build-logic").task(":convention:test"))
+    dependsOn(gradle.includedBuild("build-logic").task(":detekt-rules:test"))
 }
 
 tasks.register("test") {

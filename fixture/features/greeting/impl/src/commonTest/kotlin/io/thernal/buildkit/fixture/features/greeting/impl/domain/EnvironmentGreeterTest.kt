@@ -1,4 +1,4 @@
-package io.thernal.buildkit.fixture.features.greeting.impl
+package io.thernal.buildkit.fixture.features.greeting.impl.domain
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

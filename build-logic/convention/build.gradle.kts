@@ -16,6 +16,9 @@ dependencies {
     compileOnly(libs.kotlin.gradle.plugin)
     compileOnly(libs.compose.gradle.plugin)
     compileOnly(libs.compose.compiler.gradle.plugin)
+    // implementation, not compileOnly: Detekt is applied by a convention rather than declared in the
+    // application's root build, so it has to travel with build-logic.
+    implementation(libs.detekt.gradle.plugin)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.junit4)
@@ -46,6 +49,10 @@ gradlePlugin {
         register("environment") {
             id = "io.thernal.buildkit.environment"
             implementationClass = "io.thernal.buildkit.buildlogic.EnvironmentConventionPlugin"
+        }
+        register("detekt") {
+            id = "io.thernal.buildkit.detekt"
+            implementationClass = "io.thernal.buildkit.buildlogic.DetektPipelinePlugin"
         }
         register("modules") {
             id = "io.thernal.buildkit.modules"
