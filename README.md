@@ -50,11 +50,12 @@ installed by the first Gradle sync (`core.hooksPath = .githooks`), except on CI.
 |---|---|
 | `./gradlew create profile api impl wiring` | scaffolds `features/profile/{api,impl,wiring}` — multiplatform modules, sibling dependencies, a Metro binding container in `wiring` |
 | `./gradlew graph` | writes `report/`: module health verdicts, build waves, dependency graphs, coupling metrics |
-| `./gradlew assembleDevDebug -PcomposeStabilityReport=true composeStabilityReport` | writes `report/compose-stability.md` |
+| `./gradlew assembleDevDebug -PcomposeStabilityReport=true` then `./gradlew composeStabilityReport` | one page per Compose module under `report/compose-stability/` (non-skippable composables, unstable classes) and an index; a module's page changes only when its own code does |
 | `./gradlew buildHealth` | dependency-analysis advice (never fails) |
 
 `app.modules.root` and `app.modules.areas` say where modules live. `report/*.md` merges with a
-driver that keeps one side, and `.githooks/post-merge` regenerates the report afterwards.
+driver that keeps one side, and `.githooks/post-merge` regenerates the module report afterwards. The
+stability pages are per module, so branches touching different modules do not conflict on them.
 
 ## Scripts, make and fastlane
 

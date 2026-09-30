@@ -57,11 +57,20 @@ class ModulesConventionPlugin : Plugin<Project> {
             modules.set(providers.provider { collectModules(this@with, moduleLayout) })
         }
 
-        tasks.register<ComposeStabilityReportTask>("composeStabilityReport") {
+        // Same name as the module tasks, so `./gradlew composeStabilityReport` runs every module's and
+        // then this index over them.
+        val composeModules = provider { subprojects.filter { it.tasks.findByName(STABILITY_REPORT_TASK) != null } }
+        tasks.register<StabilityIndexTask>(STABILITY_REPORT_TASK) {
             group = TASK_GROUP
-            description = "Aggregates Compose compiler metrics (-P$STABILITY_REPORT_PROPERTY=true) into $REPORT_DIRECTORY/$STABILITY_REPORT_FILE."
-            repositoryDirectory.set(layout.projectDirectory)
-            outputDirectory.set(layout.projectDirectory.dir(REPORT_DIRECTORY))
+            description = "Writes $REPORT_DIRECTORY/$STABILITY_REPORT_DIRECTORY/ — one page per Compose module and an index."
+            dependsOn(composeModules.map { modules -> modules.map { it.tasks.named(STABILITY_REPORT_TASK) } })
+            modulePaths.set(composeModules.map { modules -> modules.map(Project::getPath) })
+            summaryFiles.set(
+                composeModules.map { modules ->
+                    modules.map { it.layout.buildDirectory.file("compose-stability/summary.properties").get().asFile.path }
+                },
+            )
+            outputDirectory.set(layout.projectDirectory.dir("$REPORT_DIRECTORY/$STABILITY_REPORT_DIRECTORY"))
         }
         Unit
     }

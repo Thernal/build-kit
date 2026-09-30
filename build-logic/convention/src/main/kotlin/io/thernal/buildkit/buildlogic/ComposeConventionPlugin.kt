@@ -54,4 +54,5 @@ internal fun Project.configureComposeCompiler() {
             reportsDestination.set(layout.buildDirectory.dir("compose-reports"))
         }
     }
+    registerModuleStabilityReport()
 }

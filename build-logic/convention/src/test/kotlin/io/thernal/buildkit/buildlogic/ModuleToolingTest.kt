@@ -62,11 +62,31 @@ class ModuleToolingTest {
     }
 
     @Test
-    fun `stability metrics map back to their module and reports`() {
-        val root = File("/repo")
-        val metrics = File("/repo/features/x/impl/build/compose-metrics/android/main/impl-module.json")
-        assertEquals(":features:x:impl", moduleGradlePath(metrics, root))
-        assertEquals(File("/repo/features/x/impl/build/compose-reports/android/main"), reportsDirectoryFor(metrics))
-        assertEquals(mapOf("totalComposables" to 3, "skippableComposables" to 2), parseModuleMetrics("{ \"totalComposables\": 3, \"skippableComposables\" : 2 }"))
+    fun `stability reads the android metrics and both report lists`() {
+        val build = kotlin.io.path.createTempDirectory("stability").toFile()
+        build.resolve("compose-metrics/iosArm64/main").apply { mkdirs() }.resolve("m-module.json").writeText("{\"totalComposables\": 9}")
+        val android = build.resolve("compose-metrics/android/main").apply { mkdirs() }.resolve("m-module.json")
+        android.writeText("{ \"totalComposables\": 3, \"skippableComposables\" : 2 }")
+        val reports = build.resolve("compose-reports").apply { mkdirs() }
+        reports.resolve("m-classes.txt").writeText("unstable class com.example.State {\n}\nstable class com.example.Ok {\n}\n")
+        reports.resolve("m-composables.txt").writeText(
+            "restartable skippable scheme(\"x\") fun com.example.Fine(\n)\nrestartable scheme(\"x\") fun com.example.Slow(\n  unstable state: State\n)\n",
+        )
+
+        assertEquals(android, preferredMetricsFile(build.resolve("compose-metrics")))
+        assertEquals(mapOf("totalComposables" to 3, "skippableComposables" to 2), parseModuleMetrics(android.readText()))
+        assertEquals(listOf("com.example.State"), unstableClasses(reports))
+        assertEquals(listOf("com.example.Slow"), nonSkippableComposables(reports))
+        build.deleteRecursively()
+    }
+
+    @Test
+    fun `each module gets its own report file, linked from the index`() {
+        assertEquals("features-profile-impl.md", stabilityReportName(":features:profile:impl"))
+        val page = renderModuleStability(ModuleStability(":a:b", mapOf("totalComposables" to 2), listOf("X"), listOf("Y")))
+        assertTrue("- `X`" in page && "- `Y`" in page)
+        val index = renderStabilityIndex(listOf(":a:b" to mapOf("totalComposables" to 2, "skippableComposables" to 1)))
+        assertTrue("[`:a:b`](a-b.md)" in index)
+        assertTrue("50.0%" in index)
     }
 }

@@ -35,8 +35,7 @@ abstract class ModuleGraphTask : DefaultTask() {
 
         directory.mkdirs()
         directory.listFiles { file -> file.isFile && file.extension == "md" }
-            // The stability report shares the directory and is written by its own task.
-            ?.filterNot { file -> file.name in pages.keys || file.name == STABILITY_REPORT_FILE }
+            ?.filterNot { file -> file.name in pages.keys }
             ?.forEach { stale -> stale.delete() }
         pages.forEach { (name, content) -> directory.resolve(name).writeText(content) }
 
