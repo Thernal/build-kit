@@ -46,4 +46,4 @@ when the rule is wrong for the whole project. Never `--no-verify`, never hand-ed
 Add it under `build-logic/detekt-rules/src/main/kotlin/…`, register it in `ProjectRuleSetProvider`, give
 it a test beside the others, enable it in `detekt.yml` under the project rule set, and run
 `./gradlew test detektFull`. A rule added here is kit code: consider whether it belongs upstream in
-build-kit (report it with `skillctl.sh report build-kit --kit --kind idea`).
+build-kit (report it upstream: an issue in the build-kit repository, or `skillctl.sh report build-kit --kit --kind idea` with skill-manager).

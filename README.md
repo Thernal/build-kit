@@ -5,10 +5,8 @@ environment flavors for several apps, signing, Detekt with the project's own rul
 block-then-annotate pre-commit hook, module scaffolding, module and Compose stability reports,
 dependency analysis, and the scripts, `make` targets and store lanes around them.
 
-An application takes it **by copy**, not as a dependency: `skillctl.sh kit install build-kit` copies
-`build-logic/` and the rest renamed to the application's package, installs the `build-kit` skill, and
-records both in `kits.lock`, so every later change here is offered to the application and merged three
-ways around its own edits. Nothing is published to a Maven repository.
+An application takes it **by copy**, not as a dependency — see [Installing](#installing). Nothing is
+published to a Maven repository.
 
 ## Documentation
 
@@ -19,17 +17,45 @@ ways around its own edits. Nothing is published to a Maven repository.
 | [`skills/build-kit`](skills/build-kit/SKILL.md) | the same, for an agent working in an application that took the kit |
 | [`kit.yml`](kit.yml) | what an application copies, and what its build must provide |
 
-## Installing into an application
+## Installing
+
+An application takes the kit **by copy**, not as a dependency: the code is copied into the app, renamed to the app's own package, and belongs to the app from then on. Nothing is published to a Maven repository.
+
+### With skill-manager
+
+If you have access to the author's knowledge repository (`github.com/Thernal/knowledge`), its **skill-manager** skill does all of it — copy, rename, the skill, and later updates:
 
 ```sh
 skillctl.sh kit install build-kit --package com.example.app --alias app
 ```
 
-`--package` renames `io.thernal.buildkit` (plugin ids, sources, the Detekt rules' package prefix);
-`--alias` renames `libs.plugins.buildkit.` in the copied files. The install prints what the
-application's own files must provide — the `requires` list in `kit.yml`: settings, root build file,
-version catalog, `gradle.properties` keys. [`skills/build-kit/references/setup.md`](skills/build-kit/references/setup.md)
-walks through them with a complete example; `fixture/` is a working one.
+It copies the `code` parts of [`kit.yml`](kit.yml) renamed, installs the `build-kit` skill and records the copy in `kits.lock`. `kit status` then shows what changed upstream and what the app edited; `kit update` merges the kit's changes three ways, keeping the app's edits. The install prints what the app must provide (`requires`).
+
+### Without it
+
+The same by hand, from a clone of this repository.
+
+1. **Copy** the paths listed under `code` in [`kit.yml`](kit.yml) into the app, at the same paths. Note the commit you copied (`git rev-parse HEAD`) — updates start from it.
+2. **Rename** in everything copied:
+
+   | In the kit | Becomes | Where |
+   |---|---|---|
+   | `io.thernal.buildkit` | the app's package, e.g. `com.example.app` | sources, build files; and the directories `io/thernal/buildkit` |
+   | `libs.plugins.buildkit.` | the app's catalog alias, e.g. `libs.plugins.app.` | build files |
+
+   ```sh
+   # in the app, after copying — perl, so it runs the same on macOS and Linux
+   grep -rlI -e io.thernal.buildkit -e io/thernal/buildkit -e plugins.buildkit. .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts \
+     | xargs perl -pi -e 's/\Qio.thernal.buildkit\E/com.example.app/g; s{\Qio/thernal/buildkit\E}{com/example/app}g; s/libs\.plugins\.\Qbuildkit\E\./libs.plugins.app./g'
+   find .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts -depth -type d -path '*/io/thernal/buildkit' | while read -r d; do
+     mkdir -p "${d%/io/thernal/buildkit}/com/example" && mv "$d" "${d%/io/thernal/buildkit}/com/example/app"
+   done
+   find .githooks Makefile build-logic config/detekt fastlane gradle/app-settings.gradle.kts scripts -depth -type d -empty -delete
+   ```
+
+3. **Provide** what the copy expects — the `requires` list in [`kit.yml`](kit.yml): settings, the root build file, the version catalog and `gradle.properties` keys — [`skills/build-kit/references/setup.md`](skills/build-kit/references/setup.md) walks through them, and `fixture/` is a working example.
+4. **The skill** (optional): copy [`skills/build-kit`](skills/build-kit) into the app's skills directory (`.claude/skills/` for Claude Code), with the same renames, so an agent working in the app knows the kit.
+5. **Updates** are yours to carry: `git diff <the commit you copied> <a newer one> -- <the code paths>` in the kit shows what changed; apply what you want, renamed the same way.
 
 ## Conventions
 

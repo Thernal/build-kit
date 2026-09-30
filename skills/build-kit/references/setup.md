@@ -4,6 +4,8 @@
 skillctl.sh kit install build-kit --package com.example.app --alias app
 ```
 
+Without skill-manager, the kit's `README.md` → Installing → *Without it* does the same by hand (copy, rename, provide).
+
 This copies, renamed: `build-logic/` (conventions, Detekt rules, their tests), `config/detekt/`,
 `gradle/app-settings.gradle.kts`, `.githooks/`, `scripts/`, `Makefile`, `fastlane/`. It never writes the
 application's own build files. Those need what follows; the kit's own `fixture/` is a complete, working
