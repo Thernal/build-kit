@@ -8,14 +8,15 @@ kept from an earlier run: that module was not built with metrics this time.
 
 | | |
 |---|---|
-| Modules with Compose code | 4 |
-| Composables | 4 |
+| Modules with Compose code | 5 |
+| Composables | 5 |
 | Skippable | 100.0% |
-| Effectively stable classes | 50.0% |
+| Effectively stable classes | 60.0% |
 
 | Module | Composables | Skippable | Classes | Stable |
 |---|---:|---:|---:|---:|
-| [`:fixture:apps:customer`](fixture-apps-customer.md) | 1 | 100.0% | 1 | 0.0% |
-| [`:fixture:apps:partner`](fixture-apps-partner.md) | 1 | 100.0% | 1 | 0.0% |
+| [`:fixture:apps:customer:android`](fixture-apps-customer-android.md) | 1 | 100.0% | 1 | 0.0% |
+| [`:fixture:apps:customer:shared`](fixture-apps-customer-shared.md) | 1 | 100.0% | 1 | 100.0% |
+| [`:fixture:apps:partner:android`](fixture-apps-partner-android.md) | 1 | 100.0% | 1 | 0.0% |
+| [`:fixture:apps:partner:shared`](fixture-apps-partner-shared.md) | 1 | 100.0% | 1 | 100.0% |
 | [`:fixture:features:greeting:impl`](fixture-features-greeting-impl.md) | 1 | 100.0% | 1 | 100.0% |
-| [`:fixture:shared`](fixture-shared.md) | 1 | 100.0% | 1 | 100.0% |

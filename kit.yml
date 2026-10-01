@@ -60,4 +60,4 @@ requires:
   - gradle.properties app.namespace, app.flavors (at least one, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas
   - files .env.<flavor> per flavor at the root; gradle/gradle-daemon-jvm.properties with toolchainVersion=21 (Metro's Gradle plugin)
   - .gitattributes report/**/*.md merge=generated-report; .gitignore .misc/ and config/signing/release/
-  - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/version.properties, config/compose/stability.conf, a Gemfile with fastlane
+  - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/{android,ios,shared} per app with apps/<name>/version.properties, xcodegen for ios/project.yml, config/compose/stability.conf, a Gemfile with fastlane

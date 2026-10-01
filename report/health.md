@@ -15,13 +15,14 @@ the modules it needs.
 | | Module | Condition | Used by | Depends on |
 |---|---|---|---:|---:|
 | 🔴 | `:fixture:tools:text` | Unused | 0 | 0 |
-| 🟢 | `:fixture:apps:customer` | Healthy | 0 | 1 |
-| 🟢 | `:fixture:apps:partner` | Healthy | 0 | 1 |
+| 🟡 | `:fixture:features:greeting:impl` | Concrete hub | 3 | 2 |
+| 🟢 | `:fixture:apps:customer:android` | Healthy | 0 | 1 |
+| 🟢 | `:fixture:apps:customer:shared` | Healthy | 1 | 4 |
+| 🟢 | `:fixture:apps:partner:android` | Healthy | 0 | 1 |
+| 🟢 | `:fixture:apps:partner:shared` | Healthy | 1 | 4 |
 | 🟢 | `:fixture:core:config` | Healthy | 1 | 0 |
-| 🟢 | `:fixture:core:diagnostics` | Healthy | 1 | 0 |
-| 🟢 | `:fixture:features:greeting:api` | Healthy | 3 | 0 |
-| 🟢 | `:fixture:features:greeting:impl` | Healthy | 2 | 2 |
-| 🟢 | `:fixture:features:greeting:wiring` | Healthy | 1 | 2 |
-| 🟢 | `:fixture:shared` | Healthy | 2 | 4 |
+| 🟢 | `:fixture:core:diagnostics` | Healthy | 2 | 0 |
+| 🟢 | `:fixture:features:greeting:api` | Healthy | 4 | 0 |
+| 🟢 | `:fixture:features:greeting:wiring` | Healthy | 2 | 2 |
 
 [← Module report](README.md)

@@ -10,8 +10,10 @@ repeats the verdict from [Health](health.md).
 ```mermaid
 graph LR
   subgraph apps["apps"]
-    fixture_apps_customer["apps:customer"]
-    fixture_apps_partner["apps:partner"]
+    fixture_apps_customer_android["apps:customer:android"]
+    fixture_apps_customer_shared["apps:customer:shared"]
+    fixture_apps_partner_android["apps:partner:android"]
+    fixture_apps_partner_shared["apps:partner:shared"]
   end
   subgraph core["core"]
     fixture_core_config["core:config"]
@@ -19,25 +21,26 @@ graph LR
   end
   subgraph features["features"]
     fixture_features_greeting_api["features:greeting:api"]
-    fixture_features_greeting_impl["features:greeting:impl"]
+    fixture_features_greeting_impl["🟡 features:greeting:impl"]
     fixture_features_greeting_wiring["features:greeting:wiring"]
-  end
-  subgraph shared["shared"]
-    fixture_shared["shared"]
   end
   subgraph tools["tools"]
     fixture_tools_text["🔴 tools:text"]
   end
-  fixture_apps_customer --> fixture_shared
-  fixture_apps_partner --> fixture_shared
+  fixture_apps_customer_android --> fixture_apps_customer_shared
+  fixture_apps_customer_shared --> fixture_core_diagnostics
+  fixture_apps_customer_shared --> fixture_features_greeting_api
+  fixture_apps_customer_shared --> fixture_features_greeting_impl
+  fixture_apps_customer_shared --> fixture_features_greeting_wiring
+  fixture_apps_partner_android --> fixture_apps_partner_shared
+  fixture_apps_partner_shared --> fixture_core_diagnostics
+  fixture_apps_partner_shared --> fixture_features_greeting_api
+  fixture_apps_partner_shared --> fixture_features_greeting_impl
+  fixture_apps_partner_shared --> fixture_features_greeting_wiring
   fixture_features_greeting_impl --> fixture_core_config
   fixture_features_greeting_impl --> fixture_features_greeting_api
   fixture_features_greeting_wiring --> fixture_features_greeting_api
   fixture_features_greeting_wiring --> fixture_features_greeting_impl
-  fixture_shared --> fixture_core_diagnostics
-  fixture_shared --> fixture_features_greeting_api
-  fixture_shared --> fixture_features_greeting_impl
-  fixture_shared --> fixture_features_greeting_wiring
   classDef api fill:#e0eef2,stroke:#0d5c70,color:#0d5c70;
   classDef impl fill:#f6ebd6,stroke:#8a6014,color:#8a6014;
   classDef wiring fill:#e2efe8,stroke:#2c6a50,color:#2c6a50;
@@ -45,7 +48,7 @@ graph LR
   class fixture_features_greeting_api api;
   class fixture_features_greeting_impl impl;
   class fixture_features_greeting_wiring wiring;
-  class fixture_apps_customer,fixture_apps_partner app;
+  class fixture_apps_customer_android,fixture_apps_customer_shared,fixture_apps_partner_android,fixture_apps_partner_shared app;
 ```
 
 [← Module report](README.md)

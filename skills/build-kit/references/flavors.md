@@ -10,8 +10,8 @@ fixtures; only clocks, push, permissions and analytics are faked), `dev` for dev
 testing before a release, `prod` for production.
 
 **Adding a flavor:** add it to `app.flavors`, create `.env.<flavor>`, add `<flavor>.versionCode=1` to each
-`apps/*/version.properties` (optional — 1 is the default), and in Xcode add the `<Flavor> Debug` /
-`<Flavor> Release` configurations and an `iosApp-<Flavor>-<BuildType>` scheme if iOS builds it. No code
+`apps/*/version.properties` (optional — 1 is the default), and in each `apps/*/ios/project.yml` the
+`<Flavor> Debug` / `<Flavor> Release` configurations and the `<app>-<Flavor>-<BuildType>` schemes. No code
 in `build-logic/` changes. **Removing** one is the reverse; search for `flavorImplementation("<name>"`.
 
 ## Which flavor a build uses
@@ -69,8 +69,9 @@ application module use AGP's own `regressImplementation(...)`, `prodImplementati
 
 ## Applications
 
-Each `apps/<name>/` with `libs.plugins.<alias>.android.application` is an app. Per flavor: `versionCode`
-from `version.properties`, `.<flavor>` application id suffix and `-<flavor>` version name suffix off
+Each `apps/<name>/` is an app — `android/` (with `libs.plugins.<alias>.android.application`), `ios/`
+(the Xcode project) and `shared/` (its KMP root). Per flavor: `versionCode` from the app's
+`version.properties`, `.<flavor>` application id suffix and `-<flavor>` version name suffix off
 production, the shared debug signature off production (when `config/signing/debug/` exists). The
 production `release` variant is signed from `config/signing/release/` (never committed); without it it
 stays unsigned unless `-PrequireReleaseSigning=true`. Set the real id in the app's own build file:
@@ -79,5 +80,5 @@ stays unsigned unless `-PrequireReleaseSigning=true`. Set the real id in the app
 android { defaultConfig { applicationId = "com.example.customer" } }
 ```
 
-A new app is a new directory under `apps/` with that build file, a manifest and `version.properties`;
-the scripts and `make` find it by its build file.
+A new app is a new `apps/<name>/` with all three parts and `version.properties` — copy
+`fixture/apps/partner`; the scripts and `make` find it by `android/build.gradle.kts`.

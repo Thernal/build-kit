@@ -14,7 +14,7 @@ wave you have already seen everything it builds on.
 | 0 | 4 |
 | 1 | 1 |
 | 2 | 1 |
-| 3 | 1 |
+| 3 | 2 |
 | 4 | 2 |
 
 ## Wave 0
@@ -52,11 +52,13 @@ graph LR
 
 ## Wave 3
 
-1 modules, all buildable at the same time.
+2 modules, all buildable at the same time.
 
 ```mermaid
 graph LR
-  fixture_shared["fixture:shared"]
+  fixture_apps_customer_shared["fixture:apps:customer:shared"]
+  fixture_apps_partner_shared["fixture:apps:partner:shared"]
+  fixture_apps_customer_shared ~~~ fixture_apps_partner_shared
 ```
 
 ## Wave 4
@@ -65,9 +67,9 @@ graph LR
 
 ```mermaid
 graph LR
-  fixture_apps_customer["fixture:apps:customer"]
-  fixture_apps_partner["fixture:apps:partner"]
-  fixture_apps_customer ~~~ fixture_apps_partner
+  fixture_apps_customer_android["fixture:apps:customer:android"]
+  fixture_apps_partner_android["fixture:apps:partner:android"]
+  fixture_apps_customer_android ~~~ fixture_apps_partner_android
 ```
 
 

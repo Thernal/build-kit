@@ -54,8 +54,8 @@ Flavors and apps come from `gradle.properties` everywhere.
 make help
 make build-android APP=customer FLAVOR=beta BUILD_TYPE=release   # → .misc/artifacts/android; aab for production release
 make verify-android-release APP=customer FLAVOR=prod             # minified, mapping present
-make build-ios-framework FLAVOR=prod                             # IOS_FRAMEWORK_MODULE, default :shared
-make build-ios FLAVOR=beta                                       # Xcode "Beta Release", scheme iosApp-Beta-Release
+make build-ios-framework APP=customer FLAVOR=prod                # :apps:customer:shared
+make build-ios APP=customer FLAVOR=beta                          # apps/customer/ios, "Beta Release", scheme customer-Beta-Release
 make test test-ios detekt graph
 scripts/bump-version-code.sh customer beta                       # before a distributable build
 scripts/deeplink.sh 'myapp://profile?id=42' customer dev          # adb, one device; ids as the build computes them
@@ -65,6 +65,6 @@ scripts/deeplink.sh --ios 'myapp://profile?id=42'                # booted simula
 ## Store lanes
 
 `fastlane/Fastfile`: `fastlane android play app:<name> [track:internal]` (production app bundle to Google
-Play) and `fastlane ios testflight flavor:<flavor>`. Credentials come from the environment only —
-`GOOGLE_PLAY_JSON_KEY`, `IOS_BUNDLE_ID_<FLAVOR>`, `APP_STORE_CONNECT_API_KEY_PATH`, match's
+Play) and `fastlane ios testflight app:<name> flavor:<flavor>`. Credentials come from the environment only —
+`GOOGLE_PLAY_JSON_KEY`, `IOS_BUNDLE_ID_<APP>_<FLAVOR>`, `APP_STORE_CONNECT_API_KEY_PATH`, match's
 `MATCH_GIT_URL`/`MATCH_PASSWORD`. Firebase App Distribution is firebase-kit's.

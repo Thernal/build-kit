@@ -33,3 +33,6 @@ config/signing/release/
 fastlane/.env
 fastlane/.env.*
 !fastlane/.env.example
+
+# Generated from each app's ios/project.yml by xcodegen.
+*.xcodeproj/

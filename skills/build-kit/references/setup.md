@@ -117,7 +117,8 @@ app.modules.areas=apps,core,designsystem,features
 - `.gitattributes`: `report/**/*.md merge=generated-report`.
 - `.gitignore`: `.misc/` and `config/signing/release/`.
 - `config/signing/debug/` (`keystore.properties` + keystore) to share one debug signature — optional.
-- `apps/<name>/version.properties` (`versionName=`, `<flavor>.versionCode=`) — optional, defaults apply.
+- `apps/<name>/{android,ios,shared}` per app (see README → Apps) and `apps/<name>/version.properties`
+  (`versionName=`, `<flavor>.versionCode=`) — optional, defaults apply. `xcodegen` for `ios/project.yml`.
 - A `Gemfile` with `gem "fastlane"` if the store lanes are used.
 
 ## Check

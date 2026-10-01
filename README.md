@@ -57,6 +57,25 @@ The same by hand, from a clone of this repository.
 4. **The skill** (optional): copy [`skills/build-kit`](skills/build-kit) into the app's skills directory (`.claude/skills/` for Claude Code), with the same renames, so an agent working in the app knows the kit.
 5. **Updates** are yours to carry: `git diff <the commit you copied> <a newer one> -- <the code paths>` in the kit shows what changed; apply what you want, renamed the same way.
 
+## Apps
+
+Every app is `apps/<name>/` with the same three parts, so Android and iOS stay symmetric however many
+apps the repository ships:
+
+```text
+apps/<name>/
+  android/            :apps:<name>:android — the Android application (`android.application`)
+  ios/                the Xcode project, generated from ios/project.yml (xcodegen)
+  shared/             :apps:<name>:shared — the app's Kotlin Multiplatform root (its graph, its root
+                      composable); android/ depends on it, ios/ embeds its framework
+  version.properties  versionName and one <flavor>.versionCode — the app's, for both platforms
+```
+
+Xcode configurations are named after the flavor (`Beta Debug`, `Beta Release`) and schemes
+`<name>-<Flavor>-<BuildType>`; each configuration sets `KOTLIN_FRAMEWORK_BUILD_TYPE`, since Kotlin cannot
+read the build type from a flavored name. `fixture/apps/customer` and `fixture/apps/partner` are complete
+examples of all three parts.
+
 ## Conventions
 
 | Plugin (`libs.plugins.<alias>.…`) | Applied to | Does |
@@ -65,7 +84,7 @@ The same by hand, from a clone of this repository.
 | `compose` | UI modules | `kmp.library` + Compose Multiplatform (runtime, foundation, ui as `implementation`), the stability configuration, compiler metrics on demand, the module's stability report task |
 | `injection` | modules with Metro code | Metro code generation and runtime, on multiplatform, JVM or Android application modules |
 | `kotlin.library` | JVM-only tools | Kotlin/JVM, test dependencies, Detekt |
-| `android.application` | each `apps/<name>` | the environment flavors, per-flavor version codes from `version.properties`, id and name suffixes, shared debug and production release signing, R8, Compose, Detekt |
+| `android.application` | each `apps/<name>/android` | the environment flavors, per-flavor version codes from the app's `version.properties`, id and name suffixes, shared debug and production release signing, R8, Compose, Detekt |
 | `environment` | the one module that owns configuration | generates `Environment` in `commonMain` from `.env.<active flavor>` |
 | `modules` | the root project | rejects `api(...)` (except `app.api.allowed`), `create`, `graph`, the stability index, dependency analysis |
 | `detekt` | the root project | the Detekt pipeline tasks and the Git hooks |
@@ -169,13 +188,14 @@ its module's compiler output does, so branches touching different modules do not
 
 ```sh
 make build-android APP=customer FLAVOR=beta BUILD_TYPE=release   # apk, or aab for production release
-make build-ios-framework FLAVOR=prod
+make build-ios-framework APP=customer FLAVOR=prod              # the app's shared/ framework
+make build-ios-unsigned APP=customer FLAVOR=dev BUILD_TYPE=debug # simulator, no signing
 make verify-android-release APP=customer FLAVOR=prod             # R8 on, mapping present
 make test test-ios detekt graph
 scripts/bump-version-code.sh customer beta
 scripts/deeplink.sh 'app://profile?id=42' customer dev           # adb; --ios <url> for the simulator
 bundle exec fastlane android play app:customer                   # Play internal track
-bundle exec fastlane ios testflight flavor:beta
+bundle exec fastlane ios testflight app:customer flavor:beta
 ```
 
 All of them read flavors and apps from `gradle.properties`. Firebase App Distribution is not here —

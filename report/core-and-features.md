@@ -15,7 +15,7 @@ graph LR
   end
   subgraph features["features"]
     fixture_features_greeting_api["features:greeting:api"]
-    fixture_features_greeting_impl["features:greeting:impl"]
+    fixture_features_greeting_impl["🟡 features:greeting:impl"]
     fixture_features_greeting_wiring["features:greeting:wiring"]
   end
   fixture_features_greeting_impl --> fixture_core_config

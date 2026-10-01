@@ -3,11 +3,11 @@
 # Firebase App Distribution lanes belong to firebase-kit, not here.
 #
 #   bundle exec fastlane android play app:customer [track:internal]
-#   bundle exec fastlane ios testflight flavor:beta
+#   bundle exec fastlane ios testflight app:customer flavor:beta
 #
 # Credentials come from the environment and never from the repository:
 #   GOOGLE_PLAY_JSON_KEY            service-account JSON (content) for the Play Developer API
-#   IOS_BUNDLE_ID_<FLAVOR>          bundle id per flavor, e.g. IOS_BUNDLE_ID_BETA
+#   IOS_BUNDLE_ID_<APP>_<FLAVOR>    bundle id per app and flavor, e.g. IOS_BUNDLE_ID_CUSTOMER_BETA
 #   APP_STORE_CONNECT_API_KEY_PATH  App Store Connect API key (JSON) for upload and match
 #   MATCH_GIT_URL / MATCH_PASSWORD  match's certificate repository
 
@@ -46,17 +46,18 @@ platform :android do
 end
 
 platform :ios do
-  desc "Builds one flavor of the iOS app and uploads it to TestFlight"
+  desc "Builds one flavor of an app's iOS side and uploads it to TestFlight"
   lane :testflight do |options|
+    app = options[:app] || UI.user_error!("Pass app:<name>")
     flavor = require_flavor(options[:flavor] || PRODUCTION)
     configuration = "#{flavor.capitalize} Release"
     api_key = app_store_connect_api_key(key_filepath: ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH"))
 
-    match(type: "appstore", app_identifier: ENV.fetch("IOS_BUNDLE_ID_#{flavor.upcase}"), readonly: true, api_key: api_key)
-    sh("cd #{ROOT} && make build-ios-framework FLAVOR=#{flavor} BUILD_TYPE=release")
+    match(type: "appstore", app_identifier: ENV.fetch("IOS_BUNDLE_ID_#{app.upcase.tr('-', '_')}_#{flavor.upcase}"), readonly: true, api_key: api_key)
+    sh("cd #{ROOT} && make build-ios-framework xcode-project APP=#{app} FLAVOR=#{flavor} BUILD_TYPE=release")
     build_app(
-      project: File.join(ROOT, "iosApp/iosApp.xcodeproj"),
-      scheme: "iosApp-#{flavor.capitalize}-Release",
+      project: Dir[File.join(ROOT, "**/apps/#{app}/ios/#{app}.xcodeproj")].first,
+      scheme: "#{app}-#{flavor.capitalize}-Release",
       configuration: configuration,
       export_method: "app-store",
       output_directory: File.join(ARTIFACTS, "ios"),

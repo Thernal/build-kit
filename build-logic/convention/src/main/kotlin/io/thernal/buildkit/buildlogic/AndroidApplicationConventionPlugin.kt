@@ -4,18 +4,19 @@ import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.plugins.BasePluginExtension
 import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 import org.gradle.kotlin.dsl.configure
 
 /**
- * An Android application module — one per app a repository ships (`apps/customer`, `apps/partner`),
- * each hosting the shared Compose Multiplatform code.
+ * The Android side of an app — `apps/<name>/android`, one per app a repository ships, beside the
+ * app's `ios/` (the Xcode project) and `shared/` (its Kotlin Multiplatform root, which both embed).
  *
  * Every application carries the same `environment` flavor dimension, built from `app.flavors`:
  * non-production flavors get an application id suffix (`.dev`), a version name suffix (`-dev`) and
  * the shared debug signature, so they install beside production; the production flavor gets release
- * signing. Version codes come per flavor from the module's `version.properties`.
+ * signing. Version codes come per flavor from the app's `version.properties` (`apps/<name>/`).
  *
  * The namespace and application id default to `app.namespace` plus the module path; an application
  * sets its real id in its own `android { defaultConfig { applicationId = … } }`.
@@ -32,7 +33,10 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         val catalog = libs
         val jvm = catalog.version("jvm").toInt()
         val flavors = appFlavors()
-        val version = readAppVersion(projectDir, flavors.all)
+        // `apps/<name>/android`: the version is the app's, shared with `apps/<name>/ios`.
+        val version = readAppVersion(projectDir.parentFile, flavors.all)
+        // Artifacts carry the app's name (`customer-beta-release.aab`), not the module's (`android`).
+        extensions.configure<BasePluginExtension> { archivesName.set(projectDir.parentFile.name) }
 
         extensions.configure<ApplicationExtension> {
             namespace = defaultNamespace()

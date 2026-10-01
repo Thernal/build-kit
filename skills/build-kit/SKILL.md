@@ -36,9 +36,12 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
 
 - **Capabilities, not layers.** A module applies what it uses: `kmp.library` (every multiplatform
   module), `compose` (UI), `injection` (Metro), `kotlin.library` (JVM tools), `android.application`
-  (each `apps/<name>`), `environment` (the one configuration module). Detekt comes with all of them.
+  (each `apps/<name>/android`), `environment` (the one configuration module). Detekt comes with all of them.
   `compose` also packages Compose Resources into the Android library target (`androidResources`), so
   `Res` works on Android without anything in the module's own build file.
+- **Apps are symmetric:** `apps/<name>/{android,ios,shared}` — the Android module, the Xcode project
+  (`ios/project.yml`) and the app's KMP root both embed; `version.properties` beside them. `APP=` in
+  `make` and fastlane picks all three. A second app is a second such directory, never a second iosApp.
 - **No `api(...)`.** Every dependency is `implementation`, declared where its types are used. The build
   fails otherwise. Only modules exported into the iOS framework (`export(...)`) go in `app.api.allowed`.
 - **Flavors are data** (`app.flavors`). Apps have real product flavors; shared code is built for **one
