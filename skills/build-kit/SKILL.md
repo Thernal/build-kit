@@ -37,6 +37,8 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
 - **Capabilities, not layers.** A module applies what it uses: `kmp.library` (every multiplatform
   module), `compose` (UI), `injection` (Metro), `kotlin.library` (JVM tools), `android.application`
   (each `apps/<name>`), `environment` (the one configuration module). Detekt comes with all of them.
+  `compose` also packages Compose Resources into the Android library target (`androidResources`), so
+  `Res` works on Android without anything in the module's own build file.
 - **No `api(...)`.** Every dependency is `implementation`, declared where its types are used. The build
   fails otherwise. Only modules exported into the iOS framework (`export(...)`) go in `app.api.allowed`.
 - **Flavors are data** (`app.flavors`). Apps have real product flavors; shared code is built for **one
