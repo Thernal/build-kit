@@ -57,7 +57,7 @@ requires:
   - catalog versions kotlin, jvm (17), agp, android-compile-sdk, android-target-sdk, android-min-sdk, compose-multiplatform, kotlinx-coroutines, metro, detekt, junit4 (dependency-analysis optional)
   - catalog libraries android-gradle-plugin, kotlin-gradle-plugin, compose-gradle-plugin, compose-compiler-gradle-plugin, detekt-gradle-plugin, detekt-api, detekt-test, detekt-ktlint-wrapper, dependency-analysis-gradle-plugin, kotlin-test, kotlinx-coroutines-test, compose-runtime, compose-foundation, compose-ui, metro-runtime, junit4
   - catalog plugins <alias>-kmp-library, <alias>-compose, <alias>-injection, <alias>-kotlin-library, <alias>-android-application, <alias>-environment, <alias>-modules, <alias>-detekt — ids <package>.kmp.library and so on
-  - gradle.properties app.namespace, app.flavors (at least two, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas
+  - gradle.properties app.namespace, app.flavors (at least one, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas
   - files .env.<flavor> per flavor at the root; gradle/gradle-daemon-jvm.properties with toolchainVersion=21 (Metro's Gradle plugin)
   - .gitattributes report/**/*.md merge=generated-report; .gitignore .misc/ and config/signing/release/
   - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/version.properties, config/compose/stability.conf, a Gemfile with fastlane

@@ -103,7 +103,8 @@ app.flavors.default=dev
 | `beta` | real manual testing before a release |
 | `prod` | production |
 
-At least two; any names (`test…` is refused — Android reserves it). Adding one is a list entry and its
+At least one — an app with a single environment lists just `prod`, and its variants stay
+`prodDebug`/`prodRelease`; any names (`test…` is refused — Android reserves it). Adding one is a list entry and its
 `.env.<flavor>` file. Application modules get real product flavors: non-production ones install beside
 production (`.dev` id suffix, `-dev` version name, shared debug signature). Multiplatform modules have
 no product flavors, so **each Gradle invocation builds shared code for one flavor**, taken from, in

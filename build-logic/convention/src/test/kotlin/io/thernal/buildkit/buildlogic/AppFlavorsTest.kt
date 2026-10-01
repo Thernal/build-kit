@@ -25,9 +25,18 @@ class AppFlavorsTest {
     }
 
     @Test
-    fun `rejects fewer than two flavors`() {
-        assertFailsWith<GradleException> { AppFlavors.parse("prod", null, null) }
+    fun `rejects an empty list`() {
         assertFailsWith<GradleException> { AppFlavors.parse(null, null, null) }
+        assertFailsWith<GradleException> { AppFlavors.parse(" , ", null, null) }
+    }
+
+    @Test
+    fun `a single flavor is production and default`() {
+        val parsed = AppFlavors.parse("prod", null, null)
+        assertEquals(listOf("prod"), parsed.all)
+        assertEquals("prod", parsed.production)
+        assertEquals("prod", parsed.default)
+        assertEquals(emptyList(), parsed.nonProduction)
     }
 
     @Test

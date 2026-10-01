@@ -101,7 +101,7 @@ dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 
 ```properties
 app.namespace=com.example.app                  # prefix of every namespace and generated package
-app.flavors=regress,dev,beta,prod              # asked at setup: at least two, no test* names
+app.flavors=regress,dev,beta,prod              # asked at setup: at least one, no test* names
 app.flavors.production=prod
 app.flavors.default=dev
 app.api.allowed=                               # modules exported into the iOS framework, if any

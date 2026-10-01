@@ -12,11 +12,13 @@ internal const val ACTIVE_FLAVOR_PROPERTY = "app.env"
 internal const val ENVIRONMENT_DIMENSION = "environment"
 
 private val FLAVOR_NAME = Regex("[a-z][a-z0-9]*")
-private const val MINIMUM_FLAVORS = 2
+private const val MINIMUM_FLAVORS = 1
 
 /**
  * The environment flavors an application builds, read from `gradle.properties`:
- * `app.flavors` (ordered, at least two), `app.flavors.production` and `app.flavors.default`.
+ * `app.flavors` (ordered, at least one), `app.flavors.production` and `app.flavors.default`. A single
+ * flavor is both production and default: an app with one environment still gets the flavor dimension,
+ * so variant names, signing and the scripts stay the same as with several.
  *
  * The list is data, not code, so adding a flavor is a property edit plus its `.env.<flavor>` file —
  * no convention changes.
@@ -41,7 +43,7 @@ internal data class AppFlavors(
             val all = flavors.orEmpty().split(',').map(String::trim).filter(String::isNotEmpty)
             if (all.size < MINIMUM_FLAVORS) {
                 throw GradleException(
-                    "$FLAVORS_PROPERTY needs at least $MINIMUM_FLAVORS flavors, found '${flavors.orEmpty()}'.",
+                    "$FLAVORS_PROPERTY needs at least $MINIMUM_FLAVORS flavor, found '${flavors.orEmpty()}'.",
                 )
             }
             all.forEach(::validateName)

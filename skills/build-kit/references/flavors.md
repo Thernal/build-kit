@@ -2,7 +2,7 @@
 
 ## The list
 
-`gradle.properties`: `app.flavors` (ordered, at least two), `app.flavors.production`,
+`gradle.properties`: `app.flavors` (ordered, at least one — a single flavor is production and default), `app.flavors.production`,
 `app.flavors.default`. Names are lowercase letters and digits; `test…`, `main`, `debug`, `release`,
 `lint` are refused (Android reserves them). The default set is `regress, dev, beta, prod`:
 `regress` for autonomous regression runs (the real DI graph against a local mock server with recorded
