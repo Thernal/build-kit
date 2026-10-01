@@ -1,5 +1,6 @@
 package io.thernal.buildkit.buildlogic
 
+import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
@@ -29,6 +30,14 @@ class ComposeConventionPlugin : Plugin<Project> {
         val catalog = libs
 
         extensions.configure<KotlinMultiplatformExtension> {
+            // The Android-KMP library plugin packages no Android resources by default, and Compose
+            // Resources (strings, images, files under composeResources/) ship as Android assets through
+            // that pipeline: without this the APK carries none, and `Res` throws
+            // MissingResourceException at runtime on Android only.
+            targets.withType(KotlinMultiplatformAndroidLibraryTarget::class.java).configureEach {
+                androidResources.enable = true
+            }
+
             sourceSets.named("commonMain") {
                 dependencies {
                     implementation(catalog.library("compose-runtime"))
