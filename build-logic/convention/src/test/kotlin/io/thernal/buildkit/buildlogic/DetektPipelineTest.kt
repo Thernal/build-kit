@@ -99,7 +99,7 @@ class DetektPipelineTest {
     }
 
     @Test
-    fun `kit modules come from the lock's module maps`() {
+    fun `without part lines, kit modules come from the lock's module maps`() {
         val lock = """
             [storage-kit]
             map package io.thernal.storagekit com.example.app
@@ -108,13 +108,32 @@ class DetektPipelineTest {
             [build-kit]
             map package io.thernal.buildkit com.example.app
         """.trimIndent()
-        val paths = kitModulePaths(lock)
+        val modules = kitModules(lock)
 
-        assertEquals(setOf(":core:storage"), paths)
-        assertTrue(isKitModule(":core:storage:impl", paths))
-        assertTrue(isKitModule(":core:storage", paths))
-        assertFalse(isKitModule(":core:storagex:impl", paths))
-        assertFalse(isKitModule(":features:profile:impl", paths))
-        assertEquals(emptySet(), kitModulePaths(null))
+        assertEquals(setOf(":core:storage"), modules.prefixes)
+        assertTrue(modules.contains(":core:storage:impl"))
+        assertTrue(modules.contains(":core:storage"))
+        assertFalse(modules.contains(":core:storagex:impl"))
+        assertFalse(modules.contains(":features:profile:impl"))
+        assertEquals(KitModules(emptySet(), emptySet()), kitModules(null))
+    }
+
+    @Test
+    fun `part lines name exact modules, so an app module below a kit part stays the app's`() {
+        val lock = """
+            [arch-kit]
+            map module :core :core
+            part core/domain
+            part core/presentation/api
+            [storage-kit]
+            map module :storage :core:storage
+        """.trimIndent()
+        val modules = kitModules(lock)
+
+        assertTrue(modules.contains(":core:domain"))
+        assertTrue(modules.contains(":core:presentation:api"))
+        assertFalse(modules.contains(":core:domain:wiring"))
+        assertFalse(modules.contains(":core:logging:impl"))
+        assertTrue(modules.contains(":core:storage:api"))
     }
 }

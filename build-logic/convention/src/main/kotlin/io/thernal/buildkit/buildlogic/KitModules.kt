@@ -6,19 +6,45 @@ import org.gradle.api.Project
 internal const val KITS_LOCK = "kits.lock"
 
 /**
- * The Gradle paths a kit's code was installed under: the target of each `map module FROM TO` line in
- * `kits.lock` (`:core:storage` for storage-kit installed with `--module :core:storage`).
+ * The modules kits installed, read from `kits.lock`. skill-manager writes a `part <path>` line for each
+ * code part it took (`part core/storage/impl`): those are exact modules, and a module of the
+ * application's own that lives below one (`core/domain/wiring` under arch-kit's `core/domain`) stays
+ * the application's. An older lock without `part` lines falls back to each `map module FROM TO`
+ * target as a prefix (`:core:storage` for storage-kit installed with `--module :core:storage`).
  */
-internal fun kitModulePaths(lock: String?): Set<String> =
-    lock.orEmpty().lineSequence()
-        .map(String::trim)
-        .filter { it.startsWith("map module ") }
-        .mapNotNull { it.split(Regex("\\s+")).getOrNull(3) }
-        .filter { it.startsWith(":") }
-        .toSet()
+internal data class KitModules(
+    val exact: Set<String>,
+    val prefixes: Set<String>,
+) {
+    fun contains(projectPath: String): Boolean =
+        projectPath in exact || prefixes.any { kit -> projectPath == kit || projectPath.startsWith("$kit:") }
+}
 
-internal fun isKitModule(projectPath: String, kitPaths: Set<String>): Boolean =
-    kitPaths.any { kit -> projectPath == kit || projectPath.startsWith("$kit:") }
+internal fun kitModules(lock: String?): KitModules {
+    val exact = mutableSetOf<String>()
+    val prefixes = mutableSetOf<String>()
+    lock.orEmpty().lineSequence().map(String::trim).split { it.startsWith("[") }.forEach { block ->
+        val parts = block.filter { it.startsWith("part ") }.map { ":" + it.removePrefix("part ").trim().replace('/', ':') }
+        if (parts.isNotEmpty()) {
+            exact += parts
+        } else {
+            prefixes += block.filter { it.startsWith("map module ") }
+                .mapNotNull { it.split(Regex("\\s+")).getOrNull(3) }
+                .filter { it.startsWith(":") }
+        }
+    }
+    return KitModules(exact = exact, prefixes = prefixes)
+}
+
+/** The lines of a lock, cut into one list per `[kit]` section. */
+private fun Sequence<String>.split(isHeader: (String) -> Boolean): List<List<String>> {
+    val blocks = mutableListOf<MutableList<String>>()
+    forEach { line ->
+        if (isHeader(line) || blocks.isEmpty()) blocks += mutableListOf<String>()
+        blocks.last() += line
+    }
+    return blocks
+}
 
 /**
  * Whether this module is code a kit installed. Such code is not analysed here: the kit's own build
@@ -27,5 +53,5 @@ internal fun isKitModule(projectPath: String, kitPaths: Set<String>): Boolean =
  */
 internal fun Project.isKitModule(): Boolean {
     val lock = providers.fileContents(rootProject.layout.projectDirectory.file(KITS_LOCK)).asText.orNull
-    return isKitModule(path, kitModulePaths(lock))
+    return kitModules(lock).contains(path)
 }
