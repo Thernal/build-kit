@@ -33,8 +33,8 @@ internal data class ModuleLayout(
 
 /**
  * Pure scaffolding rules behind the `create` task, free of Gradle state so they can be unit tested.
- * Generated modules are plain multiplatform modules; Compose or anything else is added by hand when
- * a module actually needs it.
+ * Generated modules are plain multiplatform modules — or plain Android libraries in an Android-only
+ * application; Compose or anything else is added by hand when a module actually needs it.
  */
 internal object ModuleScaffold {
     private val SEGMENT_PATTERN = Regex("""^[a-z][a-z0-9]*(-[a-z0-9]+)*$""")
@@ -75,17 +75,30 @@ internal object ModuleScaffold {
         return "src/$sourceSet/kotlin/$packagePath"
     }
 
+    /** The source set a module's code goes in: `commonMain`, or `main` for an Android library. */
+    fun mainSourceSet(androidOnly: Boolean): String = if (androidOnly) "main" else "commonMain"
+
     /** The module build file. Sibling dependencies are declared only for siblings that exist. */
-    fun buildFile(segments: List<String>, kind: ModuleKind, siblings: Set<ModuleKind>): String {
+    fun buildFile(
+        segments: List<String>,
+        kind: ModuleKind,
+        siblings: Set<ModuleKind>,
+        androidOnly: Boolean = false,
+    ): String {
         val featureSegments = segments.dropLast(1)
         val dependencies = kind.dependsOn
             .filter { it in siblings }
             .map { "implementation(${projectAccessor(featureSegments + it.directoryName)})" }
         return buildString {
             appendLine("plugins {")
-            kind.plugins.forEach { plugin -> appendLine("    alias($PLUGIN_ACCESSOR$plugin)") }
+            kind.plugins(androidOnly).forEach { plugin -> appendLine("    alias($PLUGIN_ACCESSOR$plugin)") }
             appendLine("}")
-            if (dependencies.isNotEmpty()) {
+            if (dependencies.isNotEmpty() && androidOnly) {
+                appendLine()
+                appendLine("dependencies {")
+                dependencies.forEach { appendLine("    $it") }
+                appendLine("}")
+            } else if (dependencies.isNotEmpty()) {
                 appendLine()
                 appendLine("kotlin {")
                 appendLine("    sourceSets {")
@@ -146,13 +159,17 @@ internal object ModuleScaffold {
 /** The roles a capability splits into (`api` / `impl` / `wiring`). */
 internal enum class ModuleKind(
     val directoryName: String,
-    val plugins: List<String>,
+    private val capabilities: List<String>,
     val dependsOn: List<ModuleKind>,
 ) {
-    API("api", listOf("kmp.library"), emptyList()),
-    IMPL("impl", listOf("kmp.library"), listOf(API)),
-    WIRING("wiring", listOf("kmp.library", "injection"), listOf(API, IMPL)),
+    API("api", emptyList(), emptyList()),
+    IMPL("impl", emptyList(), listOf(API)),
+    WIRING("wiring", listOf("injection"), listOf(API, IMPL)),
     ;
+
+    /** The conventions its build file names: the platform's library convention, then capabilities. */
+    fun plugins(androidOnly: Boolean): List<String> =
+        listOf(if (androidOnly) "android.library" else "kmp.library") + capabilities
 
     companion object {
         fun from(token: String): ModuleKind = entries.firstOrNull { it.directoryName == token.lowercase() }

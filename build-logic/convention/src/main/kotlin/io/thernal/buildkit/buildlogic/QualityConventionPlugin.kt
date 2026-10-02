@@ -82,9 +82,13 @@ internal class QualityConventionPlugin : Plugin<Project> {
         pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
             analysis.configure { dependsOn(tasks.withType<Detekt>().matching { isCountedJvmAnalysis(it.name) }) }
         }
-        // An application module has only per-variant source-set tasks, none of which sees
-        // `src/main`; the plain task analyses the conventional source directories, without types.
-        pluginManager.withPlugin("com.android.application") {
+        // An Android application or library has only per-variant source-set tasks, none of which
+        // sees `src/main` alone; the plain task analyses the conventional source directories, without
+        // types.
+        pluginManager.withPlugin(ANDROID_APPLICATION_PLUGIN) {
+            analysis.configure { dependsOn(tasks.named("detekt")) }
+        }
+        pluginManager.withPlugin(ANDROID_LIBRARY_PLUGIN) {
             analysis.configure { dependsOn(tasks.named("detekt")) }
         }
         Unit

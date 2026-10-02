@@ -1,9 +1,11 @@
 package io.thernal.buildkit.buildlogic
 
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.compose.compiler.gradle.ComposeCompilerGradlePluginExtension
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -16,13 +18,20 @@ internal const val STABILITY_REPORT_PROPERTY = "composeStabilityReport"
 internal const val STABILITY_CONFIGURATION_FILE = "config/compose/stability.conf"
 
 /**
- * Compose Multiplatform on top of [KmpLibraryConventionPlugin], with the Compose artifacts every
- * UI module needs. They are added as `implementation`: a module that exposes a `@Composable` or a
- * `Modifier` still compiles, and each consumer that calls it declares Compose through this same
- * convention.
+ * Compose for a UI module, with the artifacts every one needs (runtime, foundation, ui) as
+ * `implementation`: a module that exposes a `@Composable` or a `Modifier` still compiles, and each
+ * consumer that calls it declares Compose through this same convention.
+ *
+ * The platform is the module's ([isAndroidModule]): Compose Multiplatform on top of
+ * [KmpLibraryConventionPlugin], or Jetpack Compose on an Android library ([AndroidLibraryConventionPlugin]),
+ * its artifacts from the AndroidX Compose BOM.
  */
 class ComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
+        if (isAndroidModule()) {
+            applyJetpackCompose()
+            return@with
+        }
         pluginManager.apply("io.thernal.buildkit.kmp.library")
         pluginManager.apply("org.jetbrains.compose")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
@@ -49,6 +58,29 @@ class ComposeConventionPlugin : Plugin<Project> {
 
         configureComposeCompiler()
     }
+}
+
+/**
+ * Jetpack Compose on an Android library: the AndroidX Compose BOM and its runtime, foundation and ui.
+ * An Android application gets Compose from [AndroidApplicationConventionPlugin] itself.
+ */
+private fun Project.applyJetpackCompose() {
+    if (!pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) {
+        pluginManager.apply("io.thernal.buildkit.android.library")
+    }
+    pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+
+    val catalog = libs
+    pluginManager.withPlugin(ANDROID_LIBRARY_PLUGIN) {
+        extensions.configure<LibraryExtension> { buildFeatures.compose = true }
+    }
+    dependencies {
+        add("implementation", platform(catalog.library("androidx-compose-bom")))
+        add("implementation", catalog.library("androidx-compose-runtime"))
+        add("implementation", catalog.library("androidx-compose-foundation"))
+        add("implementation", catalog.library("androidx-compose-ui"))
+    }
+    configureComposeCompiler()
 }
 
 /** Shared by every module that runs the Compose compiler, library or application. */

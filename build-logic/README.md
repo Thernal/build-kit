@@ -13,6 +13,17 @@ tooling carry across applications unchanged, which is what a kit needs.
 Quality is not a capability. Detekt is applied by every module convention and has no plugin id, so no
 module can opt out of it by omission.
 
+## Android-only is a platform, not a fork
+
+An Android-only application uses the same conventions under the same ids, so the kit stays one
+codebase and an app that later adds iOS changes plugins, not build logic. `android.library` is the one
+new convention; `compose` and `environment` read the platform off the module — an Android library or
+application already applied, a multiplatform plugin already applied, else `app.platforms` — so the
+order in a build file is the switch, and a multiplatform repository can hold an Android-only module.
+Android libraries get no product flavors for the same reason multiplatform modules have none: one
+flavor per invocation keeps a single model of "which environment is this build", and the flavor-scoped
+dependency helpers work on a plain `dependencies {}` block as well as on a source set.
+
 ## No `api(...)`
 
 `api` puts a dependency on every consumer's compile classpath. An ABI change there recompiles the whole

@@ -1,5 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
+import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+import com.android.build.api.variant.LibraryAndroidComponentsExtension
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -25,16 +27,25 @@ abstract class EnvironmentExtension {
 }
 
 /**
- * Generates a Kotlin `object` in `commonMain` from the repository-root `.env.<flavor>` of the
- * invocation's [activeFlavor]: `FLAVOR`, `IS_PRODUCTION`, and one `const val` per `.env` key. Shared
- * code on every platform reads the environment from it — there is no `BuildConfig` in a
- * multiplatform module, and iOS has none at all.
+ * Generates a Kotlin `object` from the repository-root `.env.<flavor>` of the invocation's
+ * [activeFlavor]: `FLAVOR`, `IS_PRODUCTION`, and one `const val` per `.env` key. Shared code on every
+ * platform reads the environment from it — there is no `BuildConfig` in a multiplatform module, and
+ * iOS has none at all.
+ *
+ * The object lands in `commonMain` of a multiplatform module, or in the sources of every variant of
+ * an Android library ([isAndroidModule]) — the same object either way, so an Android-only application
+ * reads its environment exactly as a multiplatform one does.
  *
  * Apply it to the one module that owns configuration; everything else asks that module.
  */
 class EnvironmentConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
-        pluginManager.apply("io.thernal.buildkit.kmp.library")
+        val android = isAndroidModule()
+        if (android) {
+            if (!pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) pluginManager.apply("io.thernal.buildkit.android.library")
+        } else {
+            pluginManager.apply("io.thernal.buildkit.kmp.library")
+        }
 
         val extension = extensions.create<EnvironmentExtension>("environment")
         extension.packageName.convention(defaultNamespace())
@@ -52,12 +63,30 @@ class EnvironmentConventionPlugin : Plugin<Project> {
             this.fields.set(fields)
             packageName.set(extension.packageName)
             objectName.set(extension.objectName)
-            outputDirectory.set(layout.buildDirectory.dir("generated/environment/commonMain/kotlin"))
+            val sourceSet = if (android) "main" else "commonMain"
+            outputDirectory.set(layout.buildDirectory.dir("generated/environment/$sourceSet/kotlin"))
         }
 
-        extensions.configure<KotlinMultiplatformExtension> {
-            sourceSets.named("commonMain") {
-                kotlin.srcDir(generate.flatMap(GenerateEnvironmentTask::outputDirectory))
+        if (android) {
+            pluginManager.withPlugin(ANDROID_LIBRARY_PLUGIN) {
+                extensions.configure<LibraryAndroidComponentsExtension> {
+                    onVariants { variant ->
+                        variant.sources.kotlin?.addGeneratedSourceDirectory(generate, GenerateEnvironmentTask::outputDirectory)
+                    }
+                }
+            }
+            pluginManager.withPlugin(ANDROID_APPLICATION_PLUGIN) {
+                extensions.configure<ApplicationAndroidComponentsExtension> {
+                    onVariants { variant ->
+                        variant.sources.kotlin?.addGeneratedSourceDirectory(generate, GenerateEnvironmentTask::outputDirectory)
+                    }
+                }
+            }
+        } else {
+            extensions.configure<KotlinMultiplatformExtension> {
+                sourceSets.named("commonMain") {
+                    kotlin.srcDir(generate.flatMap(GenerateEnvironmentTask::outputDirectory))
+                }
             }
         }
     }

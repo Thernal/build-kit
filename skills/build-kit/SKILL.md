@@ -1,12 +1,12 @@
 ---
 name: build-kit
-description: Works on the Gradle build of Compose Multiplatform apps that use build-kit, the convention-plugin kit (plugins io.thernal.buildkit.kmp.library, .compose, .injection, .kotlin.library, .android.application, .environment, .modules, .detekt; libs.plugins.buildkit.*; app.* keys in gradle.properties). Use it for any build work in such a project, even when build-kit is not named - installing the kit, creating api/impl/wiring modules, adding an app or a flavor, .env values and the generated Environment object, flavor-only dependencies, signing and version codes, the Detekt pre-commit hook and "// TODO: Detekt" markers, "api(...) is not used" errors, module health and Compose stability reports, dependency analysis, make targets, deep-link testing and store lanes - and for failures such as "Requested tasks span several flavors", "contradicts the requested variant tasks" or a commit blocked by detekt. Not for Gradle builds without build-kit.
+description: Works on the Gradle build of Compose Multiplatform apps that use build-kit, the convention-plugin kit (plugins io.thernal.buildkit.kmp.library, .android.library, .compose, .injection, .kotlin.library, .android.application, .environment, .modules, .detekt; libs.plugins.buildkit.*; app.* keys in gradle.properties). Use it for any build work in such a project, even when build-kit is not named - installing the kit, creating api/impl/wiring modules, adding an app or a flavor, .env values and the generated Environment object, flavor-only dependencies, signing and version codes, the Detekt pre-commit hook and "// TODO: Detekt" markers, "api(...) is not used" errors, module health and Compose stability reports, dependency analysis, make targets, deep-link testing and store lanes - and for failures such as "Requested tasks span several flavors", "contradicts the requested variant tasks" or a commit blocked by detekt. Not for Gradle builds without build-kit.
 ---
 
 # build-kit
 
 build-kit is the Gradle build of a Compose Multiplatform application (Android, iosArm64,
-iosSimulatorArm64): convention plugins in `build-logic/`, environment flavors shared by several apps,
+iosSimulatorArm64), or of an Android-only one (`app.platforms=android`): convention plugins in `build-logic/`, environment flavors shared by several apps,
 Detekt with project rules and a block-then-annotate hook, module scaffolding, reports, and the scripts
 around them. Source and the full guide: https://github.com/Thernal/build-kit — `README.md` for what and
 how, `build-logic/README.md` for why.
@@ -39,6 +39,11 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
   (each `apps/<name>/android`), `environment` (the one configuration module). Detekt comes with all of them.
   `compose` also packages Compose Resources into the Android library target (`androidResources`), so
   `Res` works on Android without anything in the module's own build file.
+- **Android-only** (`app.platforms=android`): modules apply `android.library` (`kmp.library` fails);
+  `compose` is Jetpack Compose from the AndroidX BOM, `environment` generates `Environment` into the
+  library's sources; an app is one module, `apps/<name>`, with `version.properties` beside it.
+  Libraries have no product flavors: `nonProductionImplementation(project, …)` in `dependencies {}`.
+  Per module too: `android.library` named before `compose`/`environment` makes just that module Android.
 - **Apps are symmetric:** `apps/<name>/{android,ios,shared}` — the Android module, the Xcode project
   (`ios/project.yml`) and the app's KMP root both embed; `version.properties` beside them. `APP=` in
   `make` and fastlane picks all three. A second app is a second such directory, never a second iosApp.

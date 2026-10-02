@@ -56,8 +56,9 @@ requires:
   - root build alias(libs.plugins.<alias>.modules) and alias(libs.plugins.<alias>.detekt), and a test task depending on build-logic's :convention:test and :detekt-rules:test
   - catalog versions kotlin, jvm (17), agp, android-compile-sdk, android-target-sdk, android-min-sdk, compose-multiplatform, kotlinx-coroutines, metro, detekt, junit4 (dependency-analysis optional)
   - catalog libraries android-gradle-plugin, kotlin-gradle-plugin, compose-gradle-plugin, compose-compiler-gradle-plugin, detekt-gradle-plugin, detekt-api, detekt-test, detekt-ktlint-wrapper, dependency-analysis-gradle-plugin, kotlin-test, kotlinx-coroutines-test, compose-runtime, compose-foundation, compose-ui, metro-runtime, junit4
-  - catalog plugins <alias>-kmp-library, <alias>-compose, <alias>-injection, <alias>-kotlin-library, <alias>-android-application, <alias>-environment, <alias>-modules, <alias>-detekt — ids <package>.kmp.library and so on
-  - gradle.properties app.namespace, app.flavors (at least one, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas
+  - catalog plugins <alias>-kmp-library, <alias>-android-library, <alias>-compose, <alias>-injection, <alias>-kotlin-library, <alias>-android-application, <alias>-environment, <alias>-modules, <alias>-detekt — ids <package>.kmp.library and so on
+  - android-only (app.platforms=android, or a module on <alias>.android.library) root build plugin android-library apply false; catalog kotlin-test-junit, androidx-compose-bom, androidx-compose-runtime, androidx-compose-foundation, androidx-compose-ui
+  - gradle.properties app.namespace, app.flavors (at least one, no test*), app.flavors.production, app.flavors.default, app.api.allowed, app.modules.root, app.modules.areas; optional app.platforms (android for an Android-only app) and app.flavors.<flavor>.idSuffix
   - files .env.<flavor> per flavor at the root; gradle/gradle-daemon-jvm.properties with toolchainVersion=21 (Metro's Gradle plugin)
   - .gitattributes report/**/*.md merge=generated-report; .gitignore .misc/ and config/signing/release/
   - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/{android,ios,shared} per app with apps/<name>/version.properties, xcodegen for ios/project.yml, config/compose/stability.conf, a Gemfile with fastlane

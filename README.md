@@ -1,6 +1,7 @@
 # build-kit
 
-The Gradle build a Compose Multiplatform application (Android + iOS) starts from: convention plugins,
+The Gradle build a Compose Multiplatform application (Android + iOS) — or an Android-only one — starts
+from: convention plugins,
 environment flavors for several apps, signing, Detekt with the project's own rules and a
 block-then-annotate pre-commit hook, module scaffolding, module and Compose stability reports,
 dependency analysis, and the scripts, `make` targets and store lanes around them.
@@ -81,11 +82,12 @@ examples of all three parts.
 | Plugin (`libs.plugins.<alias>.…`) | Applied to | Does |
 |---|---|---|
 | `kmp.library` | every multiplatform module | Kotlin Multiplatform with Android, iosArm64, iosSimulatorArm64; Android namespace from `app.namespace` + module path; test dependencies; static iOS frameworks named after the module; Detekt |
-| `compose` | UI modules | `kmp.library` + Compose Multiplatform (runtime, foundation, ui as `implementation`), the stability configuration, compiler metrics on demand, the module's stability report task |
+| `android.library` | every Android-only module | a plain Android library: namespace from `app.namespace` + module path, SDKs and JVM from the catalog, test dependencies, Android pipelines off until a module turns one on, Detekt |
+| `compose` | UI modules | `kmp.library` + Compose Multiplatform — or, on an Android library, Jetpack Compose from the AndroidX BOM — with runtime, foundation, ui as `implementation`, the stability configuration, compiler metrics on demand, the module's stability report task |
 | `injection` | modules with Metro code | Metro code generation and runtime, on multiplatform, JVM or Android application modules |
 | `kotlin.library` | JVM-only tools | Kotlin/JVM, test dependencies, Detekt |
-| `android.application` | each `apps/<name>/android` | the environment flavors, per-flavor version codes from the app's `version.properties`, id and name suffixes, shared debug and production release signing, R8, Compose, Detekt |
-| `environment` | the one module that owns configuration | generates `Environment` in `commonMain` from `.env.<active flavor>` |
+| `android.application` | each `apps/<name>/android`, or `apps/<name>` in an Android-only app | the environment flavors, per-flavor version codes from the app's `version.properties`, id and name suffixes, shared debug and production release signing, R8, Compose, Detekt |
+| `environment` | the one module that owns configuration | generates `Environment` from `.env.<active flavor>` — in `commonMain`, or in an Android library's sources |
 | `modules` | the root project | rejects `api(...)` (except `app.api.allowed`), `create`, `graph`, the stability index, dependency analysis |
 | `detekt` | the root project | the Detekt pipeline tasks and the Git hooks |
 
@@ -97,6 +99,26 @@ plugins {
     alias(libs.plugins.app.injection)
 }
 ```
+
+### Android-only applications
+
+`app.platforms=android` in `gradle.properties` builds an application with no iOS app and no shared
+code:
+
+- modules apply `android.library` (`./gradlew create` scaffolds it, with `src/main`), and
+  `kmp.library` fails with a message saying so;
+- `compose` and `environment` take the Android path: Jetpack Compose from the AndroidX Compose BOM,
+  `Environment` generated into the library's sources — read exactly as in a multiplatform app;
+- each app is a single module, `apps/<name>`, with `version.properties` beside its build file;
+- libraries have no product flavors, as multiplatform modules do not: shared code is built for one
+  flavor per invocation, and a flavor-scoped dependency is
+  `nonProductionImplementation(project, …)` / `productionImplementation(project, …)` /
+  `flavorImplementation(project, "regress", dependencyNotation = …)` in a plain `dependencies {}`.
+
+The choice is per module, too: a multiplatform repository can hold an Android-only module by naming
+`android.library` before `compose` or `environment` (`fixture/core/platform`, `fixture/apps/kiosk`).
+`app.flavors.<flavor>.idSuffix=<suffix>` gives a non-production flavor another application id suffix
+— two flavors sharing one installed identity.
 
 ### No `api(...)`
 

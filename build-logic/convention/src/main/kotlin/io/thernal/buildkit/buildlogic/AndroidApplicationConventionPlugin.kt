@@ -1,6 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
 import com.android.build.api.dsl.ApplicationExtension
+import java.io.File
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -12,6 +13,8 @@ import org.gradle.kotlin.dsl.configure
 /**
  * The Android side of an app — `apps/<name>/android`, one per app a repository ships, beside the
  * app's `ios/` (the Xcode project) and `shared/` (its Kotlin Multiplatform root, which both embed).
+ * In an Android-only application (`app.platforms=android`) the app is the module itself:
+ * `apps/<name>`, with `version.properties` beside its build file.
  *
  * Every application carries the same `environment` flavor dimension, built from `app.flavors`:
  * non-production flavors get an application id suffix (`.dev`), a version name suffix (`-dev`) and
@@ -33,10 +36,12 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         val catalog = libs
         val jvm = catalog.version("jvm").toInt()
         val flavors = appFlavors()
-        // `apps/<name>/android`: the version is the app's, shared with `apps/<name>/ios`.
-        val version = readAppVersion(projectDir.parentFile, flavors.all)
+        // `apps/<name>/android`: the version is the app's, shared with `apps/<name>/ios`. A module that
+        // is not an `android/` part is the whole app (Android-only), and holds the version itself.
+        val appDirectory = appDirectory(projectDir)
+        val version = readAppVersion(appDirectory, flavors.all)
         // Artifacts carry the app's name (`customer-beta-release.aab`), not the module's (`android`).
-        extensions.configure<BasePluginExtension> { archivesName.set(projectDir.parentFile.name) }
+        extensions.configure<BasePluginExtension> { archivesName.set(appDirectory.name) }
 
         extensions.configure<ApplicationExtension> {
             namespace = defaultNamespace()
@@ -75,7 +80,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
                         dimension = ENVIRONMENT_DIMENSION
                         versionCode = version.versionCodes.getValue(flavor)
                         if (flavor != flavors.production) {
-                            applicationIdSuffix = ".$flavor"
+                            applicationIdSuffix = ".${applicationIdSuffix(flavor)}"
                             versionNameSuffix = "-$flavor"
                             if (sharedDebugSigning) signingConfig = signingConfigs.getByName(SHARED_DEBUG_SIGNING)
                         }
@@ -91,3 +96,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         configureProductionReleaseSigning(flavors.production)
     }
 }
+
+/** `apps/<name>` for an `apps/<name>/android` module, the module's own directory otherwise. */
+internal fun appDirectory(moduleDirectory: File): File =
+    if (moduleDirectory.name == "android") moduleDirectory.parentFile else moduleDirectory

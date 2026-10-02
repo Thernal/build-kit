@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 /**
  * Enables the injection framework's code generation without adding architecture or project
  * dependencies. Metro is the current implementation; modules only ever name the capability.
- * Works on a multiplatform module, a plain Kotlin module and an Android application alike.
+ * Works on a multiplatform module, a plain Kotlin module, an Android library and an Android
+ * application alike.
  */
 class InjectionConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
@@ -28,6 +29,9 @@ class InjectionConventionPlugin : Plugin<Project> {
             dependencies { add("implementation", runtime) }
         }
         pluginManager.withPlugin("com.android.application") {
+            dependencies { add("implementation", runtime) }
+        }
+        pluginManager.withPlugin(ANDROID_LIBRARY_PLUGIN) {
             dependencies { add("implementation", runtime) }
         }
     }

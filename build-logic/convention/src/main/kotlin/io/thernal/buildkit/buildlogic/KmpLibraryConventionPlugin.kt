@@ -1,6 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
@@ -17,7 +18,13 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
  */
 class KmpLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
-        pluginManager.apply("org.jetbrains.kotlin.multiplatform")
+        if (isAndroidOnly()) {
+            throw GradleException(
+                "$path applies io.thernal.buildkit.kmp.library, but $PLATFORMS_PROPERTY=android: an Android-only " +
+                    "application has no multiplatform modules. Apply io.thernal.buildkit.android.library instead.",
+            )
+        }
+        pluginManager.apply(KOTLIN_MULTIPLATFORM_PLUGIN)
         pluginManager.apply("com.android.kotlin.multiplatform.library")
         QualityConventionPlugin().apply(target)
 

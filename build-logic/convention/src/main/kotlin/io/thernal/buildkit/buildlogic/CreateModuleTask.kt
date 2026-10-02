@@ -33,6 +33,9 @@ abstract class CreateModuleTask : DefaultTask() {
     @get:Input abstract val namespacePrefix: Property<String>
     @get:Input abstract val modulesRoot: Property<String>
     @get:Input abstract val modulesAreas: Property<String>
+
+    /** `true` in an Android-only application (`app.platforms=android`): Android libraries, `src/main`. */
+    @get:Input abstract val androidOnly: Property<Boolean>
     @get:Internal abstract val repositoryDirectory: DirectoryProperty
 
     @TaskAction
@@ -50,6 +53,9 @@ abstract class CreateModuleTask : DefaultTask() {
         val existing = ModuleKind.entries.filter { capabilityDirectory.resolve(it.directoryName).resolve(BUILD_FILE).isFile }
         val siblings = (existing + kinds).toSet()
         val prefix = namespacePrefix.get()
+        val androidOnly = androidOnly.get()
+        val sourceSets = if (androidOnly) ANDROID_SOURCE_SETS else SOURCE_SETS
+        val mainSourceSet = ModuleScaffold.mainSourceSet(androidOnly)
 
         val created = kinds.mapNotNull { kind ->
             val moduleSegments = segments + kind.directoryName
@@ -59,14 +65,14 @@ abstract class CreateModuleTask : DefaultTask() {
                 return@mapNotNull null
             }
             moduleDirectory.mkdirs()
-            moduleDirectory.resolve(BUILD_FILE).writeText(ModuleScaffold.buildFile(moduleSegments, kind, siblings))
-            SOURCE_SETS.forEach { sourceSet ->
+            moduleDirectory.resolve(BUILD_FILE).writeText(ModuleScaffold.buildFile(moduleSegments, kind, siblings, androidOnly))
+            sourceSets.forEach { sourceSet ->
                 moduleDirectory.resolve(ModuleScaffold.sourceDirectory(prefix, moduleSegments, sourceSet))
                     .apply { mkdirs() }
                     .resolve(".gitkeep").writeText("")
             }
             if (kind == ModuleKind.WIRING) {
-                moduleDirectory.resolve(ModuleScaffold.sourceDirectory(prefix, moduleSegments, "commonMain"))
+                moduleDirectory.resolve(ModuleScaffold.sourceDirectory(prefix, moduleSegments, mainSourceSet))
                     .resolve("${ModuleScaffold.bindingContainerName(segments)}.kt")
                     .writeText(ModuleScaffold.bindingContainer(prefix, moduleSegments))
             }
@@ -83,7 +89,7 @@ abstract class CreateModuleTask : DefaultTask() {
             """
             |
             |Modules are discovered on the next configuration; check with ./gradlew projects.
-            |They are plain multiplatform modules: add Compose (libs.plugins.buildkit.compose) or anything
+            |They are plain ${if (androidOnly) "Android libraries" else "multiplatform modules"}: add Compose (libs.plugins.buildkit.compose) or anything
             |else in the build file when the module needs it, and declare dependencies with
             |implementation(...) — api(...) is rejected.
             """.trimMargin(),
@@ -105,5 +111,6 @@ abstract class CreateModuleTask : DefaultTask() {
     private companion object {
         const val BUILD_FILE = "build.gradle.kts"
         val SOURCE_SETS = listOf("commonMain", "commonTest")
+        val ANDROID_SOURCE_SETS = listOf("main", "test")
     }
 }

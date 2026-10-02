@@ -39,6 +39,10 @@ gradlePlugin {
             id = "io.thernal.buildkit.injection"
             implementationClass = "io.thernal.buildkit.buildlogic.InjectionConventionPlugin"
         }
+        register("androidLibrary") {
+            id = "io.thernal.buildkit.android.library"
+            implementationClass = "io.thernal.buildkit.buildlogic.AndroidLibraryConventionPlugin"
+        }
         register("kotlinLibrary") {
             id = "io.thernal.buildkit.kotlin.library"
             implementationClass = "io.thernal.buildkit.buildlogic.KotlinLibraryConventionPlugin"

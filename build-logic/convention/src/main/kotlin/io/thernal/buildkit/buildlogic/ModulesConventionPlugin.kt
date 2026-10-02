@@ -44,6 +44,7 @@ class ModulesConventionPlugin : Plugin<Project> {
             namespacePrefix.set(providers.gradleProperty(NAMESPACE_PROPERTY))
             modulesRoot.set(moduleLayout.root.joinToString("/"))
             modulesAreas.set(moduleLayout.areas.joinToString(","))
+            androidOnly.set(isAndroidOnly())
             repositoryDirectory.set(layout.projectDirectory)
         }
 
