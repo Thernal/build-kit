@@ -65,9 +65,10 @@ class ComposeConventionPlugin : Plugin<Project> {
  * An Android application gets Compose from [AndroidApplicationConventionPlugin] itself.
  */
 private fun Project.applyJetpackCompose() {
-    if (!pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) {
-        pluginManager.apply("io.thernal.buildkit.android.library")
-    }
+    // An application already runs the Compose compiler and its stability report through
+    // AndroidApplicationConventionPlugin; naming `compose` there as well changes nothing.
+    if (pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) return
+    pluginManager.apply("io.thernal.buildkit.android.library")
     pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
 
     val catalog = libs
