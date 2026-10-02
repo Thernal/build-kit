@@ -44,6 +44,7 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
   library's sources; an app is one module, `apps/<name>`, with `version.properties` beside it.
   Libraries have no product flavors: `nonProductionImplementation(project, …)` in `dependencies {}`.
   Per module too: `android.library` named before `compose`/`environment` makes just that module Android.
+  `compose` changes nothing on an `android.application`, which runs the Compose compiler itself.
 - **Apps are symmetric:** `apps/<name>/{android,ios,shared}` — the Android module, the Xcode project
   (`ios/project.yml`) and the app's KMP root both embed; `version.properties` beside them. `APP=` in
   `make` and fastlane picks all three. A second app is a second such directory, never a second iosApp.
