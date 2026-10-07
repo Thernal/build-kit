@@ -12,6 +12,7 @@ graph LR
   subgraph core["core"]
     fixture_core_config["core:config"]
     fixture_core_diagnostics["core:diagnostics"]
+    fixture_core_platform["core:platform"]
   end
   subgraph features["features"]
     fixture_features_greeting_api["features:greeting:api"]

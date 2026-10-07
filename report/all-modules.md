@@ -12,12 +12,14 @@ graph LR
   subgraph apps["apps"]
     fixture_apps_customer_android["apps:customer:android"]
     fixture_apps_customer_shared["apps:customer:shared"]
+    fixture_apps_kiosk["apps:kiosk"]
     fixture_apps_partner_android["apps:partner:android"]
     fixture_apps_partner_shared["apps:partner:shared"]
   end
   subgraph core["core"]
     fixture_core_config["core:config"]
     fixture_core_diagnostics["core:diagnostics"]
+    fixture_core_platform["core:platform"]
   end
   subgraph features["features"]
     fixture_features_greeting_api["features:greeting:api"]
@@ -25,18 +27,20 @@ graph LR
     fixture_features_greeting_wiring["features:greeting:wiring"]
   end
   subgraph tools["tools"]
-    fixture_tools_text["🔴 tools:text"]
+    fixture_tools_text["tools:text"]
   end
   fixture_apps_customer_android --> fixture_apps_customer_shared
   fixture_apps_customer_shared --> fixture_core_diagnostics
   fixture_apps_customer_shared --> fixture_features_greeting_api
   fixture_apps_customer_shared --> fixture_features_greeting_impl
   fixture_apps_customer_shared --> fixture_features_greeting_wiring
+  fixture_apps_kiosk --> fixture_core_platform
   fixture_apps_partner_android --> fixture_apps_partner_shared
   fixture_apps_partner_shared --> fixture_core_diagnostics
   fixture_apps_partner_shared --> fixture_features_greeting_api
   fixture_apps_partner_shared --> fixture_features_greeting_impl
   fixture_apps_partner_shared --> fixture_features_greeting_wiring
+  fixture_core_platform --> fixture_tools_text
   fixture_features_greeting_impl --> fixture_core_config
   fixture_features_greeting_impl --> fixture_features_greeting_api
   fixture_features_greeting_wiring --> fixture_features_greeting_api
@@ -48,7 +52,7 @@ graph LR
   class fixture_features_greeting_api api;
   class fixture_features_greeting_impl impl;
   class fixture_features_greeting_wiring wiring;
-  class fixture_apps_customer_android,fixture_apps_customer_shared,fixture_apps_partner_android,fixture_apps_partner_shared app;
+  class fixture_apps_customer_android,fixture_apps_customer_shared,fixture_apps_kiosk,fixture_apps_partner_android,fixture_apps_partner_shared app;
 ```
 
 [← Module report](README.md)
