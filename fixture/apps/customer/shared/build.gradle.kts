@@ -1,4 +1,4 @@
-import io.thernal.buildkit.buildlogic.nonProductionImplementation
+import io.thernal.buildkit.buildlogic.flavor.nonProductionImplementation
 
 plugins {
     alias(libs.plugins.buildkit.compose)

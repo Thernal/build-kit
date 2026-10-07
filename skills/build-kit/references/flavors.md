@@ -53,7 +53,7 @@ Every flavor has every key (empty, with a warning, where a file lacks it), so co
 
 ## Flavor-scoped dependencies
 
-In a multiplatform module (`import io.thernal.buildkit.buildlogic.*` at the top of the build file):
+In a multiplatform module (`import io.thernal.buildkit.buildlogic.flavor.*` at the top of the build file):
 
 ```kotlin
 commonMain.dependencies {

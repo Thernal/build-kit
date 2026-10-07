@@ -1,5 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.flavor.AppFlavors
+import io.thernal.buildkit.buildlogic.flavor.flavorFromTaskNames
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

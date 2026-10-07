@@ -12,12 +12,14 @@ internal const val PLATFORMS_PROPERTY = "app.platforms"
 internal const val ANDROID_LIBRARY_PLUGIN = "com.android.library"
 internal const val ANDROID_APPLICATION_PLUGIN = "com.android.application"
 internal const val KOTLIN_MULTIPLATFORM_PLUGIN = "org.jetbrains.kotlin.multiplatform"
+internal const val KOTLIN_JVM_PLUGIN = "org.jetbrains.kotlin.jvm"
+internal const val COMPOSE_COMPILER_PLUGIN = "org.jetbrains.kotlin.plugin.compose"
 
 /** True when `app.platforms` lists Android alone: a repository with no iOS app and no shared code. */
 internal fun Project.isAndroidOnly(): Boolean = isAndroidOnly(providers.gradleProperty(PLATFORMS_PROPERTY).orNull)
 
 internal fun isAndroidOnly(platforms: String?): Boolean {
-    val listed = platforms.orEmpty().split(',').map { it.trim().lowercase() }.filter(String::isNotEmpty)
+    val listed = platforms.commaSeparated().map(String::lowercase).toList()
     return listed == listOf("android")
 }
 

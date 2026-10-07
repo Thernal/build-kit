@@ -29,39 +29,39 @@ gradlePlugin {
     plugins {
         register("kmpLibrary") {
             id = "io.thernal.buildkit.kmp.library"
-            implementationClass = "io.thernal.buildkit.buildlogic.KmpLibraryConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.libraries.KmpLibraryConventionPlugin"
         }
         register("compose") {
             id = "io.thernal.buildkit.compose"
-            implementationClass = "io.thernal.buildkit.buildlogic.ComposeConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.compose.ComposeConventionPlugin"
         }
         register("injection") {
             id = "io.thernal.buildkit.injection"
-            implementationClass = "io.thernal.buildkit.buildlogic.InjectionConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.injection.InjectionConventionPlugin"
         }
         register("androidLibrary") {
             id = "io.thernal.buildkit.android.library"
-            implementationClass = "io.thernal.buildkit.buildlogic.AndroidLibraryConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.libraries.AndroidLibraryConventionPlugin"
         }
         register("kotlinLibrary") {
             id = "io.thernal.buildkit.kotlin.library"
-            implementationClass = "io.thernal.buildkit.buildlogic.KotlinLibraryConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.libraries.KotlinLibraryConventionPlugin"
         }
         register("androidApplication") {
             id = "io.thernal.buildkit.android.application"
-            implementationClass = "io.thernal.buildkit.buildlogic.AndroidApplicationConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.application.AndroidApplicationConventionPlugin"
         }
         register("environment") {
             id = "io.thernal.buildkit.environment"
-            implementationClass = "io.thernal.buildkit.buildlogic.EnvironmentConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.environment.EnvironmentConventionPlugin"
         }
         register("detekt") {
             id = "io.thernal.buildkit.detekt"
-            implementationClass = "io.thernal.buildkit.buildlogic.DetektPipelinePlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.quality.DetektPipelinePlugin"
         }
         register("modules") {
             id = "io.thernal.buildkit.modules"
-            implementationClass = "io.thernal.buildkit.buildlogic.ModulesConventionPlugin"
+            implementationClass = "io.thernal.buildkit.buildlogic.modules.ModulesConventionPlugin"
         }
     }
 }

@@ -1,5 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.environment.environmentSource
+import io.thernal.buildkit.buildlogic.environment.parseEnvironment
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
