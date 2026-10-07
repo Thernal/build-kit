@@ -13,13 +13,15 @@ A `wiring` module reads as fully abstract because a binding container is an inte
 |---|---:|---:|---:|---:|---:|---:|
 | `:fixture:apps:customer:android` | 0 | 1 | 1.00 | 0.00 | 0.00 | 1 |
 | `:fixture:apps:customer:shared` | 1 | 4 | 0.80 | 1.00 | 0.80 | 1 |
+| `:fixture:apps:kiosk` | 0 | 1 | 1.00 | 0.00 | 0.00 | 1 |
 | `:fixture:apps:partner:android` | 0 | 1 | 1.00 | 0.00 | 0.00 | 1 |
 | `:fixture:apps:partner:shared` | 1 | 4 | 0.80 | 1.00 | 0.80 | 1 |
 | `:fixture:core:config` | 1 | 0 | 0.00 | 0.00 | 1.00 | 1 |
 | `:fixture:core:diagnostics` | 2 | 0 | 0.00 | 0.00 | 1.00 | 1 |
+| `:fixture:core:platform` | 1 | 1 | 0.50 | 0.00 | 0.50 | 0 |
 | `:fixture:features:greeting:api` | 4 | 0 | 0.00 | 1.00 | 0.00 | 1 |
 | `:fixture:features:greeting:impl` | 3 | 2 | 0.40 | 0.00 | 0.60 | 1 |
 | `:fixture:features:greeting:wiring` | 2 | 2 | 0.50 | 0.00 | 0.50 | 1 |
-| `:fixture:tools:text` | 0 | 0 | 0.00 | 0.00 | 1.00 | 0 |
+| `:fixture:tools:text` | 1 | 0 | 0.00 | 0.00 | 1.00 | 0 |
 
 [← Module report](README.md)

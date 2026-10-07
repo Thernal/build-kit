@@ -1,5 +1,17 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.compose.stability.ModuleStability
+import io.thernal.buildkit.buildlogic.compose.stability.nonSkippableComposables
+import io.thernal.buildkit.buildlogic.compose.stability.parseModuleMetrics
+import io.thernal.buildkit.buildlogic.compose.stability.preferredMetricsFile
+import io.thernal.buildkit.buildlogic.compose.stability.renderModuleStability
+import io.thernal.buildkit.buildlogic.compose.stability.renderStabilityIndex
+import io.thernal.buildkit.buildlogic.compose.stability.stabilityReportName
+import io.thernal.buildkit.buildlogic.compose.stability.unstableClasses
+import io.thernal.buildkit.buildlogic.modules.graph.isProductionDependencyConfiguration
+import io.thernal.buildkit.buildlogic.modules.scaffold.ModuleKind
+import io.thernal.buildkit.buildlogic.modules.scaffold.ModuleLayout
+import io.thernal.buildkit.buildlogic.modules.scaffold.ModuleScaffold
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

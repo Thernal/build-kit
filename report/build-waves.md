@@ -12,8 +12,8 @@ wave you have already seen everything it builds on.
 | Wave | Parallel |
 |---:|---:|
 | 0 | 4 |
-| 1 | 1 |
-| 2 | 1 |
+| 1 | 2 |
+| 2 | 2 |
 | 3 | 2 |
 | 4 | 2 |
 
@@ -34,20 +34,24 @@ graph LR
 
 ## Wave 1
 
-1 modules, all buildable at the same time.
+2 modules, all buildable at the same time.
 
 ```mermaid
 graph LR
+  fixture_core_platform["fixture:core:platform"]
   fixture_features_greeting_impl["fixture:features:greeting:impl"]
+  fixture_core_platform ~~~ fixture_features_greeting_impl
 ```
 
 ## Wave 2
 
-1 modules, all buildable at the same time.
+2 modules, all buildable at the same time.
 
 ```mermaid
 graph LR
+  fixture_apps_kiosk["fixture:apps:kiosk"]
   fixture_features_greeting_wiring["fixture:features:greeting:wiring"]
+  fixture_apps_kiosk ~~~ fixture_features_greeting_wiring
 ```
 
 ## Wave 3

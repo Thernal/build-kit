@@ -18,4 +18,4 @@ None: every restartable composable here skips when its inputs are unchanged.
 
 Make them immutable, mark them `@Immutable`/`@Stable`, or list them in `config/compose/stability.conf`.
 
-- `io.thernal.buildkit.fixture.apps.partner.android.MainActivity`
+- `io.thernal.buildkit.apps.partner.android.MainActivity`

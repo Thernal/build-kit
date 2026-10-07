@@ -13,6 +13,16 @@ tooling carry across applications unchanged, which is what a kit needs.
 Quality is not a capability. Detekt is applied by every module convention and has no plugin id, so no
 module can opt out of it by omission.
 
+## One package per capability
+
+`convention` is split by what a part is for, not by kind of class: `libraries` (`kmp.library`,
+`android.library`, `kotlin.library`), `application`, `compose` (with `stability`), `injection`,
+`environment`, `flavor`, `quality` (Detekt), `modules` (with `scaffold` and `graph`) and `git`. A plugin,
+its task and the pure functions behind them sit together, so a change to one capability stays in one
+directory. What every package shares — the catalog, the namespace, the platform, comma-separated
+properties — stays in the root package. Build files import the flavor-scoped dependency helpers from
+`flavor`.
+
 ## Android-only is a platform, not a fork
 
 An Android-only application uses the same conventions under the same ids, so the kit stays one

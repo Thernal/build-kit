@@ -1,5 +1,16 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.git.restoreExecutableBits
+import io.thernal.buildkit.buildlogic.git.withHooksPath
+import io.thernal.buildkit.buildlogic.git.withReportMergeDriver
+import io.thernal.buildkit.buildlogic.modules.KitModules
+import io.thernal.buildkit.buildlogic.modules.kitModules
+import io.thernal.buildkit.buildlogic.quality.annotate
+import io.thernal.buildkit.buildlogic.quality.clearDetektTodos
+import io.thernal.buildkit.buildlogic.quality.fileBlocks
+import io.thernal.buildkit.buildlogic.quality.isCountedJvmAnalysis
+import io.thernal.buildkit.buildlogic.quality.isCountedMultiplatformAnalysis
+import io.thernal.buildkit.buildlogic.quality.mergeBaseline
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

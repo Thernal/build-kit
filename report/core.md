@@ -12,6 +12,7 @@ graph LR
   subgraph core["core"]
     fixture_core_config["core:config"]
     fixture_core_diagnostics["core:diagnostics"]
+    fixture_core_platform["core:platform"]
   end
   classDef api fill:#e0eef2,stroke:#0d5c70,color:#0d5c70;
   classDef impl fill:#f6ebd6,stroke:#8a6014,color:#8a6014;

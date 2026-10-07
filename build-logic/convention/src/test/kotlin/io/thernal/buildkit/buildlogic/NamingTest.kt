@@ -1,5 +1,7 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.modules.isApiConfiguration
+import io.thernal.buildkit.buildlogic.modules.parseAllowedApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -10,6 +12,16 @@ class NamingTest {
     fun `namespace follows the module path, splitting dashes`() {
         assertEquals("com.example.features.venue.management.impl", namespaceFor("com.example", ":features:venue-management:impl"))
         assertEquals("com.example", namespaceFor("com.example", ":"))
+    }
+
+    @Test
+    fun `namespace leaves out the modules root`() {
+        assertEquals("com.example.features.profile.impl", namespaceFor("com.example", ":fixture:features:profile:impl", listOf("fixture")))
+        assertEquals("com.example.core.ui", namespaceFor("com.example", ":code:shared:core:ui", listOf("code", "shared")))
+        // A module outside the root keeps its whole path.
+        assertEquals("com.example.tools.lint", namespaceFor("com.example", ":tools:lint", listOf("fixture")))
+        assertEquals(listOf("code", "shared"), parseModulesRoot(" code/shared "))
+        assertEquals(emptyList(), parseModulesRoot(null))
     }
 
     @Test

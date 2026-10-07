@@ -81,8 +81,8 @@ examples of all three parts.
 
 | Plugin (`libs.plugins.<alias>.…`) | Applied to | Does |
 |---|---|---|
-| `kmp.library` | every multiplatform module | Kotlin Multiplatform with Android, iosArm64, iosSimulatorArm64; Android namespace from `app.namespace` + module path; test dependencies; static iOS frameworks named after the module; Detekt |
-| `android.library` | every Android-only module | a plain Android library: namespace from `app.namespace` + module path, SDKs and JVM from the catalog, test dependencies, Android pipelines off until a module turns one on, Detekt |
+| `kmp.library` | every multiplatform module | Kotlin Multiplatform with Android, iosArm64, iosSimulatorArm64; Android namespace from `app.namespace` + module path (below `app.modules.root`); test dependencies; static iOS frameworks named after the module; Detekt |
+| `android.library` | every Android-only module | a plain Android library: namespace from `app.namespace` + module path (below `app.modules.root`), SDKs and JVM from the catalog, test dependencies, Android pipelines off until a module turns one on, Detekt |
 | `compose` | UI modules | `kmp.library` + Compose Multiplatform — or, on an Android library, Jetpack Compose from the AndroidX BOM — with runtime, foundation, ui as `implementation`, the stability configuration, compiler metrics on demand, the module's stability report task |
 | `injection` | modules with Metro code | Metro code generation and runtime, on multiplatform, JVM or Android application modules |
 | `kotlin.library` | JVM-only tools | Kotlin/JVM, test dependencies, Detekt |
@@ -203,9 +203,11 @@ it to its rules, and markers written into it would turn every kit update into a 
 | `./gradlew assembleDevDebug -PcomposeStabilityReport=true` then `./gradlew composeStabilityReport` | `report/compose-stability/`: one page per Compose module (composables that cannot skip, unstable classes) and an index |
 | `./gradlew buildHealth` | dependency-analysis advice, never a failure |
 
-`app.modules.root` and `app.modules.areas` say where modules live. A stability page changes only when
-its module's compiler output does, so branches touching different modules do not conflict on them;
-`report/**/*.md` merges keeping one side, and the post-merge hook regenerates the module report.
+`app.modules.root` and `app.modules.areas` say where modules live; the root is a directory, not part
+of any package — `fixture/features/greeting/impl` is `<app.namespace>.features.greeting.impl`. A
+stability page changes only when its module's compiler output does, so branches touching different
+modules do not conflict on them; `report/**/*.md` merges keeping one side, and the post-merge hook
+regenerates the module report.
 
 ## Scripts, make, fastlane
 

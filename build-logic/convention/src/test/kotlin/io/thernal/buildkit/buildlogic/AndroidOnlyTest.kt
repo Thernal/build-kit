@@ -1,5 +1,9 @@
 package io.thernal.buildkit.buildlogic
 
+import io.thernal.buildkit.buildlogic.application.appDirectory
+import io.thernal.buildkit.buildlogic.flavor.applicationIdSuffix
+import io.thernal.buildkit.buildlogic.modules.scaffold.ModuleKind
+import io.thernal.buildkit.buildlogic.modules.scaffold.ModuleScaffold
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals

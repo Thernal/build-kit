@@ -17,7 +17,7 @@ compose-multiplatform = "1.12.0"
 androidx-compose-bom = "2026.08.00"
 
 # AndroidX, for the fixture application modules only.
-androidx-activity = "1.+"
+androidx-activity = "1.13.0"
 
 # KotlinX
 kotlinx-coroutines = "1.11.0"

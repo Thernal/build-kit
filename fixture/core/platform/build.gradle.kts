@@ -1,6 +1,6 @@
 // An Android-only module in a multiplatform repository: android.library first, so compose and
 // environment take the Android path (Jetpack Compose, Environment in the Android sources).
-import io.thernal.buildkit.buildlogic.nonProductionImplementation
+import io.thernal.buildkit.buildlogic.flavor.nonProductionImplementation
 
 plugins {
     alias(libs.plugins.buildkit.android.library)

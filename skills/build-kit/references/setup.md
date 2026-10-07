@@ -105,7 +105,7 @@ app.flavors=regress,dev,beta,prod              # asked at setup: at least one, n
 app.flavors.production=prod
 app.flavors.default=dev
 app.api.allowed=                               # modules exported into the iOS framework, if any
-app.modules.root=                              # "" = the repository root
+app.modules.root=                              # "" = the repository root; never part of a package
 app.modules.areas=apps,core,designsystem,features
 ```
 
