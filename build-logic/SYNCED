@@ -1,0 +1,17 @@
+# Synced from conventions-kit aad643d by scripts/sync-kits.py.
+# Do not edit build-logic/ here: change conventions-kit and sync again.
+# The kit's build checks every file below (verifyBuildLogic).
+4b40cb58cecf109c8f2e08f2656dc8e01f34342265b06ed1bd72d7a739fa8e87  detekt-rules/build.gradle.kts
+9ecfd99b3956384704dc8c17e81add17b6a0e7aeb951fe406e24431413880d34  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/ProjectRuleSetProvider.kt
+4ad914f4bce36dc1b8911a3d6a1c84b8584930adaed77cb2ce75dbc04a428125  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/collections/UnsafeCollectionIndexAccess.kt
+5fcbef85720c8ec3e1a94f5df9e25b0b4479c88217f86481cdc8c9fbc51ccc74  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/packageboundary/LayerPackage.kt
+4d841fa704232c48f3c55e8aed23e71ba09c49406911e4e9346e69443c424c03  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/packageboundary/LayerPackageBoundary.kt
+484c05380436241dd2791b7fc9148dce35893287a62895e54384fb58dfc02b4d  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/packageboundary/LayerPackageRequired.kt
+fe21b3a6c79575b3be211cf1675ce6f335a1e60a834e81fc9ca2ae6c893e9258  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/preview/PreviewMustBePrivate.kt
+8894100ab23a86e5d5c7af9d88f3cc75934b035ec062d5b1945599fd77b19e92  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/style/ExpressionBodyNotAllowed.kt
+fec1ffd26744c0be3279dc3df3af0b9a571cd19bfadd468d796abaa661e5a95f  detekt-rules/src/main/kotlin/io/thernal/buildkit/detektrules/style/MultilineConstructorRequired.kt
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  detekt-rules/src/main/resources/META-INF/services/dev.detekt.api.RuleSetProvider
+b92f492327f7ceb0df1bd42e3f9a3728f2e4681833a3a08e631e2414eb2f9e95  detekt-rules/src/test/kotlin/io/thernal/buildkit/detektrules/ExpressionBodyNotAllowedTest.kt
+1b632a522d668dfced5fb588fabf7518351f4cdb65b4814fd85e1481c64b25f2  detekt-rules/src/test/kotlin/io/thernal/buildkit/detektrules/LayerPackageBoundaryTest.kt
+f3d2cee3b5bdf3447e38fc10481de052e4819c887ecfc285ae74f18629ba0932  detekt-rules/src/test/kotlin/io/thernal/buildkit/detektrules/LayerPackageRequiredTest.kt
+ecc97ba6ef1715968090b2210501d0c2046e0c6c5a673d22a618a6f4939262b5  detekt-rules/src/test/kotlin/io/thernal/buildkit/detektrules/MultilineConstructorRequiredTest.kt
