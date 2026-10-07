@@ -132,10 +132,10 @@ internal object ModuleScaffold {
         """.trimMargin()
     }
 
-    /** `features/shared/auth` → `AuthWiring`. */
+    /** `features/shared/auth` → `AuthProvidersModule`: it holds `@Provides` functions. */
     fun bindingContainerName(featureSegments: List<String>): String =
         featureSegments.lastOrNull().orEmpty().split('-').filter(String::isNotEmpty)
-            .joinToString("") { it.replaceFirstChar(Char::uppercaseChar) } + "Wiring"
+            .joinToString("") { it.replaceFirstChar(Char::uppercaseChar) } + "ProvidersModule"
 
     private fun toCamelCase(segment: String): String = segment.split('-').filter(String::isNotEmpty)
         .mapIndexed { index, part -> if (index == 0) part else part.replaceFirstChar(Char::uppercaseChar) }
