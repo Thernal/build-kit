@@ -4,7 +4,7 @@ Config: `config/detekt/detekt.yml`. Rules: Detekt's own, ktlint, and `build-logi
 
 | Rule | Says |
 |---|---|
-| `LayerPackageRequired` | a file of an `api` or `impl` module lives in its `data`, `domain` or `presentation` package |
+| `LayerPackageRequired` | a file of an `api` or `impl` module lives in its `data`, `domain` or `presentation` package; in a module named after its layer (`core/presentation/api`) directly under the module, and a layer package there is reported |
 | `LayerPackageBoundary` | inside a module, `presentation` and `data` may use `domain`, never each other; `domain` uses neither |
 | `ExpressionBodyNotAllowed` | block bodies: `{ return … }`, not `= …` |
 | `MultilineConstructorRequired` | a primary constructor with two or more parameters puts each on its own line |

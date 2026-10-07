@@ -9,7 +9,7 @@ import io.thernal.buildkit.features.greeting.impl.domain.EnvironmentGreeter
 
 @BindingContainer
 @ContributesTo(AppScope::class)
-object GreetingWiring {
+object GreetingProvidersModule {
     @Provides
     fun greeter(): Greeter {
         return EnvironmentGreeter()
