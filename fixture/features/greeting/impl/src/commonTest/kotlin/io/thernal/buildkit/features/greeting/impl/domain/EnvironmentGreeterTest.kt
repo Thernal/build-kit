@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class EnvironmentGreeterTest {
     @Test
-    fun greetsWithTheFlavor() {
+    fun `greets with the flavor`() {
         assertEquals("Hello, Ada, from beta", EnvironmentGreeter(flavor = "beta").greet("Ada"))
     }
 }

@@ -25,8 +25,9 @@ about delivery.
 - **Rename-safe.** An app's copy is renamed textually (`kit.yml`: package, alias). Write the
   package prefix whole, never split or as a regex fragment; `libs.plugins.<alias>.` literally; and keep the
   kit's name out of any string an install does not rename (resource names, authorities, cache paths).
-- `api`/`impl` code lives in `data`, `domain` or `presentation` packages, and layers point inwards
-  (the kit's own Detekt rules). `wiring` holds Metro binding containers only.
+- `api`/`impl` code lives in `data`, `domain` or `presentation` packages — a module named after its layer
+  (`core/presentation/api`) holds its code directly, never in that layer's package again — and layers
+  point inwards (the kit's own Detekt rules). `wiring` holds Metro binding containers only.
 - Kotlin nests block comments: never write `/*` inside KDoc (`image/*`, `ios/*.swift`).
 - Every module that changes what apps copy updates `kit.yml` in the same change: `code`, `surface`,
   `requires`.

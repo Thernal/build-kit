@@ -88,4 +88,43 @@ class LayerPackageRequiredTest {
 
         assertEquals(0, findings.size)
     }
+
+    @Test
+    fun `accepts a module named after its layer holding code directly`() {
+        val findings = rule.lint(
+            """
+            package io.thernal.buildkit.core.presentation.api.plugin.state
+
+            interface StateHandler
+            """.trimIndent(),
+        )
+
+        assertEquals(0, findings.size)
+    }
+
+    @Test
+    fun `reports a layer package repeated inside a module named after it`() {
+        val findings = rule.lint(
+            """
+            package io.thernal.buildkit.core.presentation.api.presentation.plugin
+
+            interface PluginContext
+            """.trimIndent(),
+        )
+
+        assertEquals(1, findings.size)
+    }
+
+    @Test
+    fun `reports another layer package inside a module named after a layer`() {
+        val findings = rule.lint(
+            """
+            package io.thernal.buildkit.core.presentation.impl.domain
+
+            class Mapper
+            """.trimIndent(),
+        )
+
+        assertEquals(1, findings.size)
+    }
 }

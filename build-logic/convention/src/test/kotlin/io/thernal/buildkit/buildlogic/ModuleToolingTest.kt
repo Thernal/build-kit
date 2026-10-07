@@ -58,7 +58,7 @@ class ModuleToolingTest {
 
     @Test
     fun `names follow the path`() {
-        assertEquals("VenueManagementWiring", ModuleScaffold.bindingContainerName(listOf("features", "venue-management")))
+        assertEquals("VenueManagementProvidersModule", ModuleScaffold.bindingContainerName(listOf("features", "venue-management")))
         assertEquals(
             "src/commonMain/kotlin/com/example/features/profile/api",
             ModuleScaffold.sourceDirectory("com.example", listOf("features", "profile", "api"), "commonMain"),

@@ -9,7 +9,9 @@
 
 Each is a plain multiplatform module (`kmp.library`; `wiring` adds `injection`) with its siblings as
 dependencies and empty `commonMain`/`commonTest` source directories; `wiring` gets a Metro
-`@BindingContainer @ContributesTo(AppScope::class)` interface to add `@Provides` functions to. Add
+`@BindingContainer @ContributesTo(AppScope::class)` interface, `<Name>ProvidersModule`, to add `@Provides`
+functions to — a `wiring` module's containers are named for what they bind (`<Name>ViewModelsModule`,
+`<Name>ProvidersModule`, `<Name>BindingsModule`). Add
 `libs.plugins.<alias>.compose` by hand to a module with UI. Existing modules are skipped, never
 overwritten. Put code in `domain`, `data` or `presentation` packages (Detekt's layer rules).
 

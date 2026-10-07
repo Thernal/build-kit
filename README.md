@@ -176,7 +176,8 @@ commonMain.dependencies {
 
 Every module runs Detekt with `config/detekt/detekt.yml` and the rules in `build-logic/detekt-rules`:
 `LayerPackageRequired` and `LayerPackageBoundary` (`api`/`impl` code lives in `data`, `domain` or
-`presentation`, and layers depend one way), `ExpressionBodyNotAllowed`, `MultilineConstructorRequired`,
+`presentation` — or directly in a module named after its layer, `core/presentation/api`, never in
+that layer's package again — and layers depend one way), `ExpressionBodyNotAllowed`, `MultilineConstructorRequired`,
 `PreviewMustBePrivate`, `UnsafeCollectionIndexAccess`, plus ktlint.
 
 **Findings never fail the build. The pre-commit hook decides:**
@@ -197,7 +198,7 @@ it to its rules, and markers written into it would turn every kit update into a 
 
 | Command | Does |
 |---|---|
-| `./gradlew create profile api impl wiring` | `features/profile/{api,impl,wiring}`: multiplatform modules, sibling dependencies, a Metro binding container in `wiring` |
+| `./gradlew create profile api impl wiring` | `features/profile/{api,impl,wiring}`: multiplatform modules, sibling dependencies, a Metro binding container (`<Name>ProvidersModule`) in `wiring` |
 | `./gradlew create core/network api impl` | the same under another area |
 | `./gradlew graph` | `report/`: health verdict per module, build waves, dependency graphs, coupling metrics |
 | `./gradlew assembleDevDebug -PcomposeStabilityReport=true` then `./gradlew composeStabilityReport` | `report/compose-stability/`: one page per Compose module (composables that cannot skip, unstable classes) and an index |

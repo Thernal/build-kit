@@ -331,6 +331,9 @@ naming:
   MatchingDeclarationName:
     active: true
     mustBeFirst: true
+    # A component file is named after its composable and also holds the component's state class
+    # (`LoginUsernameInput.kt` = `LoginUsernameInputState` + `LoginUsernameInput`).
+    excludes: ['**/components/**']
   MemberNameEqualsClassName:
     active: true
     ignoreOverridden: true
