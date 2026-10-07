@@ -5,7 +5,7 @@ import kotlin.test.assertTrue
 
 class FlavorBadgeTest {
     @Test
-    fun theLabelNamesTheGeneratedFlavor() {
+    fun `the label names the generated flavor`() {
         assertTrue(flavorLabel().startsWith(Environment.FLAVOR))
     }
 }

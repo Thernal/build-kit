@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 class SlugTest {
     @Test
-    fun slugs() {
+    fun `turns text into a slug`() {
         assertEquals("venue-management", slug("  Venue Management! "))
     }
 }
