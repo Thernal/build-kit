@@ -7,6 +7,15 @@ config:
   excludes:
     - 'project.*'
     - 'project>.*>.*'
+    - 'analysis.*'
+
+# Read by the build (QualityConventionPlugin), not by Detekt: compiler diagnostics that Detekt's own analysis must not
+# report. It analyses a multiplatform module's common and Android sources as one plain compilation, so every
+# expect/actual pair looks orphaned and "in the same module"; the Kotlin compiler still checks every pair on a build.
+analysis:
+  disabledDiagnostics:
+    - ACTUAL_WITHOUT_EXPECT
+    - EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE
 
 processors:
   active: true

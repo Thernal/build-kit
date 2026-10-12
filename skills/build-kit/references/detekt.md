@@ -42,10 +42,11 @@ every finding in a touched file blocks once.
 when the rule is wrong for the whole project. Never `--no-verify`, never hand-edited markers.
 
 Detekt analyses a multiplatform module's common and Android sources as one plain compilation, so an `expect`/`actual`
-pair looks orphaned there. The pipeline switches off the two diagnostics that say so
-(`ACTUAL_WITHOUT_EXPECT`, `EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE`) for Detekt's run only — the Kotlin compiler still
-checks every pair — so "compiler errors found during analysis" is never expected; when it appears, run the task with
-`detekt { debug = true }` to read the messages.
+pair looks orphaned there. `config/detekt/detekt.yml` lists the two diagnostics that say so under
+`analysis: disabledDiagnostics:` (`ACTUAL_WITHOUT_EXPECT`, `EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE`) — a section of the
+build's own, which the pipeline turns into `-Xwarning-level=<name>:disabled` for Detekt's run only; the Kotlin compiler
+still checks every pair. "Compiler errors found during analysis" is never expected; when it appears, run the task with
+`detekt { debug = true }` to read the messages, and add a diagnostic to the list only when it is Detekt's own artefact.
 
 ## A new rule
 

@@ -64,18 +64,16 @@ private fun Project.configureDetekt() {
 }
 
 /**
- * Detekt analyses a multiplatform module's common and Android sources as one plain compilation, so every
- * `expect`/`actual` pair looks orphaned and "in the same module" and it reports "compiler errors found during
- * analysis". Those two diagnostics are switched off for Detekt's own run only; the Kotlin compiler still checks
- * every pair when the module is built.
+ * The compiler diagnostics that `analysis.disabledDiagnostics` in `config/detekt/detekt.yml` lists are switched off
+ * for Detekt's own run only; the Kotlin compiler still reports them when the module is built.
  */
-private val DETEKT_DISABLED_DIAGNOSTICS = listOf("ACTUAL_WITHOUT_EXPECT", "EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE")
-
 private fun Project.configureDetektTasks(changedFiles: Set<File>?, autoCorrect: Boolean) {
+    val configFile = rootProject.file(DETEKT_CONFIG_FILE)
+    val disabledDiagnostics = if (configFile.isFile) disabledDiagnosticsIn(configFile.readText()) else emptyList()
     tasks.withType<Detekt>().configureEach {
         exclude("**/build/**", "**/generated/**")
         ignoreFailures.set(true)
-        freeCompilerArgs.addAll(DETEKT_DISABLED_DIAGNOSTICS.map { "-Xwarning-level=$it:disabled" })
+        freeCompilerArgs.addAll(disabledDiagnostics.map { "-Xwarning-level=$it:disabled" })
         this.autoCorrect.set(autoCorrect)
         if (changedFiles != null) {
             include { element -> element.isDirectory || element.file.canonicalFile in changedFiles }
