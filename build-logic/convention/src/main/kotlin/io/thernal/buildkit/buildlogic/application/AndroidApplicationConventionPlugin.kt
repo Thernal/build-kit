@@ -102,7 +102,9 @@ private fun ApplicationExtension.configureEnvironmentFlavors(
             if (flavor == flavors.production) return@create
             applicationIdSuffix = ".${idSuffixes.getValue(flavor)}"
             versionNameSuffix = "-$flavor"
-            if (sharedDebugSigning) signingConfig = signingConfigs.getByName(SHARED_DEBUG_SIGNING)
+            // A tester's build has to install, so every non-production variant is signed: with the team's
+            // shared debug keystore when there is one, else with AGP's own debug key.
+            signingConfig = signingConfigs.getByName(if (sharedDebugSigning) SHARED_DEBUG_SIGNING else "debug")
         }
     }
 }

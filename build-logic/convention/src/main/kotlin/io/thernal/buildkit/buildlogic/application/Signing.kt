@@ -26,7 +26,7 @@ private val REQUIRED_KEYS = listOf("storeFile", "storePassword", "keyAlias", "ke
  * A debug keystore shared by the whole team, committed under `config/signing/debug/`, so every
  * machine produces the same debug signature (Google sign-in, Firebase and app links all pin it). It
  * signs `debug` and every non-production release. Without the directory, AGP's per-machine debug
- * key is used and nothing fails.
+ * key signs both, so a tester's build always installs and nothing fails.
  */
 internal fun ApplicationExtension.configureSharedDebugSigning(rootDirectory: File): Boolean {
     val directory = rootDirectory.resolve(DEBUG_SIGNING_DIRECTORY)
