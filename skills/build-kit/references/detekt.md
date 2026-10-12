@@ -41,6 +41,12 @@ every finding in a touched file blocks once.
 `@Suppress("RuleName")` with a comment saying why, on the smallest scope; or a change in `detekt.yml`
 when the rule is wrong for the whole project. Never `--no-verify`, never hand-edited markers.
 
+Detekt analyses a multiplatform module's common and Android sources as one plain compilation, so an `expect`/`actual`
+pair looks orphaned there. The pipeline switches off the two diagnostics that say so
+(`ACTUAL_WITHOUT_EXPECT`, `EXPECT_AND_ACTUAL_IN_THE_SAME_MODULE`) for Detekt's run only — the Kotlin compiler still
+checks every pair — so "compiler errors found during analysis" is never expected; when it appears, run the task with
+`detekt { debug = true }` to read the messages.
+
 ## A new rule
 
 Add it under `build-logic/detekt-rules/src/main/kotlin/…`, register it in `ProjectRuleSetProvider`, give
