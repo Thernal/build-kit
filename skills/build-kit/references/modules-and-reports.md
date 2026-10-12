@@ -60,6 +60,7 @@ make build-ios-framework APP=customer FLAVOR=prod                # :apps:custome
 make build-ios APP=customer FLAVOR=beta                          # apps/customer/ios, "Beta Release", scheme customer-Beta-Release
 make test test-ios detekt graph
 scripts/bump-version-code.sh customer beta                       # before a distributable build
+make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa # to Firebase App Distribution (firebase-kit's script); BUMP=1 DRY_RUN=1 TESTERS= NOTES=
 scripts/deeplink.sh 'myapp://profile?id=42' customer dev          # adb, one device; ids as the build computes them
 scripts/deeplink.sh --ios 'myapp://profile?id=42'                # booted simulator
 ```
@@ -69,4 +70,4 @@ scripts/deeplink.sh --ios 'myapp://profile?id=42'                # booted simula
 `fastlane/Fastfile`: `fastlane android play app:<name> [track:internal]` (production app bundle to Google
 Play) and `fastlane ios testflight app:<name> flavor:<flavor>`. Credentials come from the environment only —
 `GOOGLE_PLAY_JSON_KEY`, `IOS_BUNDLE_ID_<APP>_<FLAVOR>`, `APP_STORE_CONNECT_API_KEY_PATH`, match's
-`MATCH_GIT_URL`/`MATCH_PASSWORD`. Firebase App Distribution is firebase-kit's.
+`MATCH_GIT_URL`/`MATCH_PASSWORD`. Firebase App Distribution is firebase-kit's; `make distribute-android` is its Android entry here.

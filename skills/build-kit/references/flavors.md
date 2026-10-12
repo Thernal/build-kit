@@ -72,7 +72,8 @@ application module use AGP's own `regressImplementation(...)`, `prodImplementati
 Each `apps/<name>/` is an app — `android/` (with `libs.plugins.<alias>.android.application`), `ios/`
 (the Xcode project) and `shared/` (its KMP root). Per flavor: `versionCode` from the app's
 `version.properties`, `.<flavor>` application id suffix and `-<flavor>` version name suffix off
-production, the shared debug signature off production (when `config/signing/debug/` exists). The
+production, and every non-production variant is signed so a tester's build installs: with the shared debug
+keystore when `config/signing/debug/` exists, else with AGP's debug key. The
 production `release` variant is signed from `config/signing/release/` (never committed); without it it
 stays unsigned unless `-PrequireReleaseSigning=true`. Set the real id in the app's own build file:
 
