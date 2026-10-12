@@ -224,8 +224,11 @@ bundle exec fastlane android play app:customer                   # Play internal
 bundle exec fastlane ios testflight app:customer flavor:beta
 ```
 
-All of them read flavors and apps from `gradle.properties`. Firebase App Distribution is not here —
-it belongs to firebase-kit.
+All of them read flavors and apps from `gradle.properties`. Firebase App Distribution belongs to firebase-kit;
+its Android path has a make target here, `make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa`
+(it calls firebase-kit's `scripts/distribute-firebase.sh`, and says so when that is not installed). A non-production
+variant is signed with the shared debug keystore when `config/signing/debug/` exists, else with AGP's debug key,
+so the APK a tester receives always installs.
 
 Credentials never enter the repository; examples of their shape do:
 

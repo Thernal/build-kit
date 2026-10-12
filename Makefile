@@ -8,8 +8,8 @@
 #   make test
 #
 # Flavors, the production flavor and the apps come from gradle.properties (app.*), as they do for the
-# build. Store and Firebase distribution are not here: fastlane/Fastfile holds the store lanes, and
-# Firebase App Distribution belongs to firebase-kit.
+# build. Store distribution is not here: fastlane/Fastfile holds the store lanes. Firebase App Distribution
+# belongs to firebase-kit; its Android target is distribute-android.
 
 comma := ,
 space := $(empty) $(empty)
@@ -58,12 +58,12 @@ ifeq (,$(filter $(APP),$(APPS)))
 $(error Unsupported APP "$(APP)". Use one of: $(APPS))
 endif
 
-.PHONY: help build-android export-android verify-android-release bump-version-code \
+.PHONY: help build-android export-android verify-android-release bump-version-code distribute-android \
         build-ios-framework build-ios build-ios-unsigned xcode-project test test-ios detekt graph
 
 help:
 	@echo "apps: $(APPS)   flavors: $(FLAVORS)   production: $(PRODUCTION_FLAVOR)"
-	@echo "targets: build-android export-android verify-android-release bump-version-code"
+	@echo "targets: build-android export-android verify-android-release bump-version-code distribute-android"
 	@echo "         build-ios-framework build-ios build-ios-unsigned test test-ios detekt graph"
 
 # ─── Android ─────────────────────────────────────────────────────────────────
@@ -92,6 +92,17 @@ verify-android-release:
 
 bump-version-code:
 	scripts/bump-version-code.sh $(APP) $(FLAVOR)
+
+# Builds one app's flavor and sends the APK to Firebase App Distribution (firebase-kit's
+# scripts/distribute-firebase.sh):
+#   make distribute-android APP=customer FLAVOR=beta BUILD_TYPE=release TESTER_GROUPS=qa
+# Also: TESTERS=a@b.c,d@e.f  NOTES="…"  BUMP=1 (versionCode +1, not committed)  NO_BUILD=1  DRY_RUN=1.
+distribute-android:
+	@test -f scripts/distribute-firebase.sh || { echo "distribute-android needs firebase-kit (scripts/distribute-firebase.sh)" >&2; exit 1; }
+	scripts/distribute-firebase.sh android $(APP) $(FLAVOR) $(BUILD_TYPE) \
+		$(if $(TESTER_GROUPS),--groups "$(TESTER_GROUPS)") $(if $(TESTERS),--testers "$(TESTERS)") \
+		$(if $(NOTES),--notes "$(NOTES)") $(if $(BUMP),--bump) $(if $(NO_BUILD),--no-build) \
+		$(if $(DRY_RUN),--dry-run)
 
 # ─── iOS ─────────────────────────────────────────────────────────────────────
 
