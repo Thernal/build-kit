@@ -17,7 +17,9 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 /**
  * Compose for a UI module, with the artifacts every one needs (runtime, foundation, ui) as
  * `implementation`: a module that exposes a `@Composable` or a `Modifier` still compiles, and each
- * consumer that calls it declares Compose through this same convention.
+ * consumer that calls it declares Compose through this same convention. Every Compose module also
+ * gets the previews: the `@Preview` annotations, and the tooling that renders them in the IDE on the
+ * module's own Android runtime classpath (a debug-only dependency on Android), so nothing ships it.
  *
  * The platform is the module's ([isAndroidModule]): Compose Multiplatform on top of the `kmp.library`
  * convention, or Jetpack Compose on an Android library, its artifacts from the AndroidX Compose BOM.
@@ -47,15 +49,26 @@ private fun Project.applyComposeMultiplatform() {
                 implementation(catalog.library("compose-runtime"))
                 implementation(catalog.library("compose-foundation"))
                 implementation(catalog.library("compose-ui"))
+                implementation(catalog.library("compose-ui-tooling-preview"))
             }
         }
+    }
+    val tooling = catalog.library("compose-ui-tooling")
+    configurations.matching { it.name == ANDROID_RUNTIME_CLASSPATH }.configureEach {
+        dependencies.addLater(tooling)
     }
     configureComposeCompiler()
 }
 
-/** An Android application gets Compose from the `android.application` convention itself. */
+/**
+ * An Android application gets Compose from the `android.application` convention itself; here it only
+ * takes the previews.
+ */
 private fun Project.applyJetpackCompose() {
-    if (pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) return
+    if (pluginManager.hasPlugin(ANDROID_APPLICATION_PLUGIN)) {
+        addJetpackPreviews()
+        return
+    }
     pluginManager.apply("io.thernal.buildkit.android.library")
     pluginManager.apply(COMPOSE_COMPILER_PLUGIN)
 
@@ -69,5 +82,18 @@ private fun Project.applyJetpackCompose() {
         add("implementation", catalog.library("androidx-compose-foundation"))
         add("implementation", catalog.library("androidx-compose-ui"))
     }
+    addJetpackPreviews()
     configureComposeCompiler()
 }
+
+private fun Project.addJetpackPreviews() {
+    val catalog = libs
+    dependencies {
+        add("implementation", platform(catalog.library("androidx-compose-bom")))
+        add("implementation", catalog.library("androidx-compose-ui-tooling-preview"))
+        add("debugImplementation", catalog.library("androidx-compose-ui-tooling"))
+    }
+}
+
+/** The Android-KMP library target's runtime classpath: the IDE renders a module's previews from it. */
+private const val ANDROID_RUNTIME_CLASSPATH = "androidRuntimeClasspath"

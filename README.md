@@ -83,7 +83,7 @@ examples of all three parts.
 |---|---|---|
 | `kmp.library` | every multiplatform module | Kotlin Multiplatform with Android, iosArm64, iosSimulatorArm64; Android namespace from `app.namespace` + module path (below `app.modules.root`); test dependencies; static iOS frameworks named after the module; Detekt |
 | `android.library` | every Android-only module | a plain Android library: namespace from `app.namespace` + module path (below `app.modules.root`), SDKs and JVM from the catalog, test dependencies, Android pipelines off until a module turns one on, Detekt |
-| `compose` | UI modules | `kmp.library` + Compose Multiplatform — or, on an Android library, Jetpack Compose from the AndroidX BOM — with runtime, foundation, ui as `implementation`, the stability configuration, compiler metrics on demand, the module's stability report task |
+| `compose` | UI modules | `kmp.library` + Compose Multiplatform — or, on an Android library, Jetpack Compose from the AndroidX BOM — with runtime, foundation, ui and the `@Preview` annotations as `implementation`, the preview tooling on the module's Android runtime classpath (debug only on Android), the stability configuration, compiler metrics on demand, the module's stability report task |
 | `injection` | modules with Metro code | Metro code generation and runtime, on multiplatform, JVM or Android application modules |
 | `kotlin.library` | JVM-only tools | Kotlin/JVM, test dependencies, Detekt |
 | `android.application` | each `apps/<name>/android`, or `apps/<name>` in an Android-only app | the environment flavors, per-flavor version codes from the app's `version.properties`, id and name suffixes, shared debug and production release signing, R8, Compose, Detekt |
