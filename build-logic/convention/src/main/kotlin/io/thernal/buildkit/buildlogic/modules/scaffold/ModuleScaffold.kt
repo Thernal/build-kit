@@ -81,6 +81,12 @@ internal object ModuleScaffold {
         }
     }
 
+    /** The build file of a module that is not split into roles: the platform's library convention only. */
+    fun singleBuildFile(androidOnly: Boolean = false): String {
+        val plugin = if (androidOnly) "android.library" else "kmp.library"
+        return "plugins {\n    alias($PLUGIN_ACCESSOR$plugin)\n}\n"
+    }
+
     private fun StringBuilder.appendAndroidDependencies(dependencies: List<String>) {
         appendLine("dependencies {")
         dependencies.forEach { appendLine("    $it") }

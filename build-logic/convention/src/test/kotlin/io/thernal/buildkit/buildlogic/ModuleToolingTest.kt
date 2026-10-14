@@ -51,6 +51,12 @@ class ModuleToolingTest {
     }
 
     @Test
+    fun `a module without roles takes the platform's library convention only`() {
+        assertEquals("plugins {\n    alias(libs.plugins.buildkit.kmp.library)\n}\n", ModuleScaffold.singleBuildFile())
+        assertEquals("plugins {\n    alias(libs.plugins.buildkit.android.library)\n}\n", ModuleScaffold.singleBuildFile(androidOnly = true))
+    }
+
+    @Test
     fun `an api module has no dependencies block`() {
         val file = ModuleScaffold.buildFile(listOf("features", "profile", "api"), ModuleKind.API, setOf(ModuleKind.API))
         assertFalse("kotlin {" in file)

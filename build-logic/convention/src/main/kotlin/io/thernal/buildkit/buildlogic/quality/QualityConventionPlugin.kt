@@ -70,8 +70,11 @@ private fun Project.configureDetekt() {
 private fun Project.configureDetektTasks(changedFiles: Set<File>?, autoCorrect: Boolean) {
     val configFile = rootProject.file(DETEKT_CONFIG_FILE)
     val disabledDiagnostics = if (configFile.isFile) disabledDiagnosticsIn(configFile.readText()) else emptyList()
+    val buildDirectory = layout.buildDirectory.get().asFile
     tasks.withType<Detekt>().configureEach {
         exclude("**/build/**", "**/generated/**")
+        // The patterns match below a source root; a generated source set's root is itself under build/.
+        exclude { element -> element.file.startsWith(buildDirectory) }
         ignoreFailures.set(true)
         freeCompilerArgs.addAll(disabledDiagnostics.map { "-Xwarning-level=$it:disabled" })
         this.autoCorrect.set(autoCorrect)

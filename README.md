@@ -200,6 +200,7 @@ it to its rules, and markers written into it would turn every kit update into a 
 |---|---|
 | `./gradlew create profile api impl wiring` | `features/profile/{api,impl,wiring}`: multiplatform modules, sibling dependencies, a Metro binding container (`<Name>ProvidersModule`) in `wiring` |
 | `./gradlew create core/network api impl` | the same under another area |
+| `./gradlew create core/common` | one module, not split into roles |
 | `./gradlew graph` | `report/`: health verdict per module, build waves, dependency graphs, coupling metrics |
 | `./gradlew assembleDevDebug -PcomposeStabilityReport=true` then `./gradlew composeStabilityReport` | `report/compose-stability/`: one page per Compose module (composables that cannot skip, unstable classes) and an index |
 | `./gradlew buildHealth` | dependency-analysis advice, never a failure |

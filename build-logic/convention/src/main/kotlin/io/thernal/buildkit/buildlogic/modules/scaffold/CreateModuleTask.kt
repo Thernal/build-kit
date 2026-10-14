@@ -16,11 +16,12 @@ import org.gradle.work.DisableCachingByDefault
 const val CREATE_ARGUMENTS_PROPERTY: String = "app.create.arguments"
 
 /**
- * Scaffolds `api`, `impl` and `wiring` modules for a capability.
+ * Scaffolds `api`, `impl` and `wiring` modules for a capability, or one module when no kind is named.
  *
  * ```
  * ./gradlew create profile api impl wiring     # features/profile/{api,impl,wiring}
  * ./gradlew create core/network api impl       # core/network/{api,impl}
+ * ./gradlew create core/common                 # core/common, one module
  * ```
  */
 @DisableCachingByDefault(because = "Scaffolding writes new source directories on demand")
@@ -42,8 +43,12 @@ abstract class CreateModuleTask : DefaultTask() {
     fun createModules() {
         val layout = ModuleLayout.parse(modulesRoot.get(), modulesAreas.get())
         val tokens = arguments.orNull.orEmpty().split(' ', '\t', '\n', ',').map(String::trim).filter(String::isNotEmpty)
-        if (tokens.size < 2) throw GradleException(usage(layout))
+        if (tokens.isEmpty()) throw GradleException(usage(layout))
         val segments = parseOrUsage(layout) { ModuleScaffold.parseSpec(tokens.first(), layout) }
+        if (tokens.size == 1) {
+            reportCreated(listOfNotNull(createSingleModule(segments, layout.root)))
+            return
+        }
         val kinds = parseOrUsage(layout) { tokens.drop(1).map(ModuleKind::from).distinct() }
 
         val capabilityDirectory = segments.fold(repositoryDirectory.get().asFile, File::resolve)
@@ -85,6 +90,28 @@ abstract class CreateModuleTask : DefaultTask() {
         return projectPath
     }
 
+    /** Writes a module that is not split into roles; returns its project path, or null when it exists. */
+    private fun createSingleModule(
+        segments: List<String>,
+        rootSegments: List<String>,
+    ): String? {
+        val projectPath = ModuleScaffold.projectPath(segments)
+        val moduleDirectory = segments.fold(repositoryDirectory.get().asFile, File::resolve)
+        if (moduleDirectory.resolve(BUILD_FILE).isFile) {
+            logger.lifecycle("Skipped $projectPath: it already exists.")
+            return null
+        }
+        val androidOnly = androidOnly.get()
+        moduleDirectory.mkdirs()
+        moduleDirectory.resolve(BUILD_FILE).writeText(ModuleScaffold.singleBuildFile(androidOnly))
+        (if (androidOnly) ANDROID_SOURCE_SETS else SOURCE_SETS).forEach { sourceSet ->
+            moduleDirectory.resolve(ModuleScaffold.sourceDirectory(namespacePrefix.get(), segments, sourceSet, rootSegments))
+                .apply { mkdirs() }
+                .resolve(".gitkeep").writeText("")
+        }
+        return projectPath
+    }
+
     private fun reportCreated(created: List<String>) {
         if (created.isEmpty()) {
             logger.lifecycle("Nothing to create; every requested module already exists.")
@@ -107,15 +134,16 @@ abstract class CreateModuleTask : DefaultTask() {
         runCatching(parse).getOrElse { throw GradleException("${it.message}\n\n${usage(layout)}") }
 
     private fun usage(layout: ModuleLayout): String = """
-        |Usage: ./gradlew create <module-path> <kind> [<kind>...]
+        |Usage: ./gradlew create <module-path> [<kind>...]
         |
         |  <module-path>  A bare name goes under '${layout.defaultArea}/'; a path starts with an area
         |                 (${layout.areas.joinToString()}).
-        |  <kind>         One or more of: ${ModuleKind.entries.joinToString { it.directoryName }}
+        |  <kind>         Any of: ${ModuleKind.entries.joinToString { it.directoryName }}; none creates one module at the path
         |
         |Examples:
         |  ./gradlew create profile api impl wiring   -> ${layout.defaultArea}/profile/{api,impl,wiring}
         |  ./gradlew create core/network api impl     -> core/network/{api,impl}
+        |  ./gradlew create core/common               -> core/common
     """.trimMargin()
 
     private companion object {

@@ -56,7 +56,8 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
   flavor per Gradle invocation** (`-Papp.env`, else the variant task names, Xcode `CONFIGURATION`,
   `local.properties`, the default). Environment values come from `.env.<flavor>` as `Environment.*`.
 - **Detekt never fails the build.** The pre-commit hook blocks a commit whose findings are new, records
-  them, marks them `// TODO: Detekt [...]`; the same commit then passes.
+  them, marks them `// TODO: Detekt [...]`; the same commit then passes. `./gradlew detektFull` writes the
+  same markers into every file it flags, so read a flagged file again before editing it.
 - **Reports are generated.** `report/` is written by `graph` and `composeStabilityReport`; never edit it.
 
 ## 3. Task router
@@ -64,7 +65,7 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
 | Task | Do | Read |
 |---|---|---|
 | install the kit, or fix a broken setup | settings, root build, catalog, properties | [setup.md](references/setup.md) |
-| new capability or module | `./gradlew create <name> api impl wiring` | [modules-and-reports.md](references/modules-and-reports.md) |
+| new capability or module | `./gradlew create <name> api impl wiring`; one module: `./gradlew create core/common` | [modules-and-reports.md](references/modules-and-reports.md) |
 | "declares api(...) dependencies" | `implementation` in every consumer; `app.api.allowed` only for framework exports | [modules-and-reports.md](references/modules-and-reports.md) |
 | new flavor, new app, new `.env` key, flavor-only dependency | properties + files, no convention edits | [flavors.md](references/flavors.md) |
 | flavor errors, wrong environment in a build | the detection order | [flavors.md](references/flavors.md) |

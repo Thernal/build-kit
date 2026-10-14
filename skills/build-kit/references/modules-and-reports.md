@@ -5,6 +5,7 @@
 ```sh
 ./gradlew create profile api impl wiring        # features/profile/{api,impl,wiring}
 ./gradlew create core/network api impl          # another area; areas: app.modules.areas
+./gradlew create core/common                    # no kind: one module at the path
 ```
 
 Each is a plain multiplatform module (`kmp.library`; `wiring` adds `injection`) with its siblings as
