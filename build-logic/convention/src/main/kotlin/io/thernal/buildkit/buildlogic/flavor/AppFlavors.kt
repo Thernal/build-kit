@@ -88,13 +88,19 @@ internal data class AppFlavors(
 /**
  * The application id suffix a non-production flavor gets, without the dot: the flavor's name, unless
  * `app.flavors.<flavor>.idSuffix` names another — two flavors sharing one installed identity (a
- * staging build on the dev app's Firebase client).
+ * staging build on the dev app's Firebase client). [NO_ID_SUFFIX] gives none: the flavor is the
+ * production app under another environment (a beta for the production app's testers), so its release
+ * is signed with the production key.
  */
-internal fun Project.applicationIdSuffix(flavor: String): String =
+internal fun Project.applicationIdSuffix(flavor: String): String? =
     applicationIdSuffix(flavor, providers.gradleProperty("$FLAVORS_PROPERTY.$flavor.idSuffix").orNull)
 
-internal fun applicationIdSuffix(flavor: String, override: String?): String =
-    override?.trim()?.removePrefix(".")?.takeIf(String::isNotEmpty) ?: flavor
+internal fun applicationIdSuffix(flavor: String, override: String?): String? {
+    val suffix = override?.trim()?.removePrefix(".")?.takeIf(String::isNotEmpty) ?: return flavor
+    return suffix.takeUnless { it == NO_ID_SUFFIX }
+}
+
+internal const val NO_ID_SUFFIX = "none"
 
 internal fun Project.appFlavors(): AppFlavors = AppFlavors.parse(
     flavors = providers.gradleProperty(FLAVORS_PROPERTY).orNull,

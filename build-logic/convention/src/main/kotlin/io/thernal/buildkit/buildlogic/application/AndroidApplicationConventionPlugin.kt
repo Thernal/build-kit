@@ -49,6 +49,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         val appDirectory = appDirectory(projectDir)
         val version = readAppVersion(appDirectory, flavors.all)
         val idSuffixes = flavors.nonProduction.associateWith { applicationIdSuffix(it) }
+        val productionIdentity = listOf(flavors.production) + idSuffixes.filterValues { it == null }.keys
         // Artifacts carry the app's name (`customer-beta-release.aab`), not the module's (`android`).
         extensions.configure<BasePluginExtension> { archivesName.set(appDirectory.name) }
 
@@ -59,7 +60,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             configureEnvironmentFlavors(flavors, version, idSuffixes, sharedDebugSigning)
         }
         configureJavaToolchain(catalog.intVersion("jvm"))
-        configureProductionReleaseSigning(flavors.production)
+        configureProductionReleaseSigning(productionIdentity)
     }
 }
 
@@ -91,7 +92,7 @@ private fun ApplicationExtension.configureReleaseBuildType() {
 private fun ApplicationExtension.configureEnvironmentFlavors(
     flavors: AppFlavors,
     version: AppVersion,
-    idSuffixes: Map<String, String>,
+    idSuffixes: Map<String, String?>,
     sharedDebugSigning: Boolean,
 ) {
     flavorDimensions += ENVIRONMENT_DIMENSION
@@ -100,8 +101,10 @@ private fun ApplicationExtension.configureEnvironmentFlavors(
             dimension = ENVIRONMENT_DIMENSION
             versionCode = version.versionCodes.getValue(flavor)
             if (flavor == flavors.production) return@create
-            applicationIdSuffix = ".${idSuffixes.getValue(flavor)}"
             versionNameSuffix = "-$flavor"
+            // The production app's identity: its release takes the production key, its debug the debug one.
+            val idSuffix = idSuffixes.getValue(flavor) ?: return@create
+            applicationIdSuffix = ".$idSuffix"
             // A tester's build has to install, so every non-production variant is signed: with the team's
             // shared debug keystore when there is one, else with AGP's own debug key.
             signingConfig = signingConfigs.getByName(if (sharedDebugSigning) SHARED_DEBUG_SIGNING else "debug")

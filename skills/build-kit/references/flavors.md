@@ -11,7 +11,8 @@ testing before a release, `prod` for production.
 
 **Adding a flavor:** add it to `app.flavors`, create `.env.<flavor>`, add `<flavor>.versionCode=1` to each
 `apps/*/version.properties` (optional — 1 is the default), and in each `apps/*/ios/project.yml` the
-`<Flavor> Debug` / `<Flavor> Release` configurations and the `<app>-<Flavor>-<BuildType>` schemes. No code
+`<Flavor> Debug` / `<Flavor> Release` configurations (with its `BUNDLE_ID_SUFFIX`) and the
+`<app>-<Flavor>-<BuildType>` schemes. No code
 in `build-logic/` changes. **Removing** one is the reverse; search for `flavorImplementation("<name>"`.
 
 ## Which flavor a build uses
@@ -75,7 +76,15 @@ Each `apps/<name>/` is an app — `android/` (with `libs.plugins.<alias>.android
 production, and every non-production variant is signed so a tester's build installs: with the shared debug
 keystore when `config/signing/debug/` exists, else with AGP's debug key. The
 production `release` variant is signed from `config/signing/release/` (never committed); without it it
-stays unsigned unless `-PrequireReleaseSigning=true`. Set the real id in the app's own build file:
+stays unsigned unless `-PrequireReleaseSigning=true`.
+
+`app.flavors.<flavor>.idSuffix=<suffix>` gives a flavor another suffix (a staging build on the dev app);
+`idSuffix=none` gives it production's id — a beta testers install over the store app — and its release is
+signed with the production key like production's. iOS mirrors the suffix: each flavor's configurations set
+`BUNDLE_ID_SUFFIX` (`.dev`; nothing for production and an `idSuffix=none` flavor) and
+`PRODUCT_BUNDLE_IDENTIFIER` is the base id plus it. Firebase needs one app per distinct id.
+
+Set the real id in the app's own build file:
 
 ```kotlin
 android { defaultConfig { applicationId = "com.example.customer" } }

@@ -74,7 +74,8 @@ apps/<name>/
 
 Xcode configurations are named after the flavor (`Beta Debug`, `Beta Release`) and schemes
 `<name>-<Flavor>-<BuildType>`; each configuration sets `KOTLIN_FRAMEWORK_BUILD_TYPE`, since Kotlin cannot
-read the build type from a flavored name. `fixture/apps/customer` and `fixture/apps/partner` are complete
+read the build type from a flavored name, and `PRODUCT_BUNDLE_IDENTIFIER` with the flavor's id suffix,
+the same as Android's (`.dev`; none for production and an `idSuffix=none` flavor). `fixture/apps/customer` and `fixture/apps/partner` are complete
 examples of all three parts.
 
 ## Conventions
@@ -118,7 +119,8 @@ code:
 The choice is per module, too: a multiplatform repository can hold an Android-only module by naming
 `android.library` before `compose` or `environment` (`fixture/core/platform`, `fixture/apps/kiosk`).
 `app.flavors.<flavor>.idSuffix=<suffix>` gives a non-production flavor another application id suffix
-— two flavors sharing one installed identity.
+— two flavors sharing one installed identity. `idSuffix=none` gives it production's id: a beta that
+testers install over the production app; its release is signed with the production key.
 
 ### No `api(...)`
 

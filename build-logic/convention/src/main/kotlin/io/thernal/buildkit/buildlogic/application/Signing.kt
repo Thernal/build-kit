@@ -40,14 +40,16 @@ internal fun ApplicationExtension.configureSharedDebugSigning(rootDirectory: Fil
 
 /**
  * The production keystore stays outside the repository (`config/signing/release/` is git-ignored).
- * It signs only the production flavor's `release` variant — a single (flavor, build type) pair the
- * flavor and build type DSL blocks cannot address, hence the variant API. Without it the variant
- * builds unsigned, unless [REQUIRE_RELEASE_SIGNING_PROPERTY] says a release is being cut.
+ * It signs only the `release` variant of [flavors] — the production flavor and those sharing its
+ * application id — (flavor, build type) pairs the flavor and build type DSL blocks cannot address,
+ * hence the variant API. Without it those variants build unsigned, unless
+ * [REQUIRE_RELEASE_SIGNING_PROPERTY] says a release is being cut.
  */
-internal fun Project.configureProductionReleaseSigning(productionFlavor: String) {
+internal fun Project.configureProductionReleaseSigning(flavors: List<String>) {
     val directory = rootDir.resolve(RELEASE_SIGNING_DIRECTORY)
     if (!directory.resolve(KEYSTORE_PROPERTIES).isFile) {
-        val message = "$path: no ${directory.resolve(KEYSTORE_PROPERTIES)}; ${productionFlavor}Release stays unsigned"
+        val variants = flavors.joinToString { "${it}Release" }
+        val message = "$path: no ${directory.resolve(KEYSTORE_PROPERTIES)}; $variants stays unsigned"
         if (providers.gradleProperty(REQUIRE_RELEASE_SIGNING_PROPERTY).orNull == "true") {
             throw GradleException(message)
         }
@@ -60,8 +62,10 @@ internal fun Project.configureProductionReleaseSigning(productionFlavor: String)
     release.loadFrom(directory)
 
     extensions.configure<ApplicationAndroidComponentsExtension> {
-        val selector = selector().withBuildType("release").withFlavor(ENVIRONMENT_DIMENSION to productionFlavor)
-        onVariants(selector) { variant -> variant.signingConfig.setConfig(release) }
+        flavors.forEach { flavor ->
+            val selector = selector().withBuildType("release").withFlavor(ENVIRONMENT_DIMENSION to flavor)
+            onVariants(selector) { variant -> variant.signingConfig.setConfig(release) }
+        }
     }
 }
 

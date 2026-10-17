@@ -8,6 +8,7 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class AndroidOnlyTest {
@@ -32,6 +33,7 @@ class AndroidOnlyTest {
         assertEquals("beta", applicationIdSuffix("beta", override = " "))
         assertEquals("dev", applicationIdSuffix("staging", override = "dev"))
         assertEquals("dev", applicationIdSuffix("staging", override = ".dev"))
+        assertNull(applicationIdSuffix("beta", override = "none"))
     }
 
     @Test

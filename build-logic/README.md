@@ -69,7 +69,9 @@ a build warning. It is a `const val` object in `commonMain` so that iOS and Andr
 The debug keystore is shared and committed (`config/signing/debug/`) because Google sign-in, Firebase
 and app links pin the debug signature; per-machine debug keys break them for everyone but the machine
 that registered. Non-production release builds use it too, so a beta can be installed beside production
-without a store. The production keystore never enters the repository; without it the production
+without a store. A flavor with `idSuffix=none` is the exception: it is the production app built for
+another environment, installed over the store's, which Android allows only under the same signature, so
+its release takes the production key. The production keystore never enters the repository; without it the production
 release is built unsigned, unless `-PrequireReleaseSigning=true` says a release is being cut.
 
 ## Detekt: never fail, block at commit
