@@ -19,17 +19,35 @@ includeBuild("build-logic")
 
 // Every directory with a build file under an area in `app.modules.areas` (below `app.modules.root`)
 // is a module. Adding one is creating the directory; there is no list to keep in sync with the tree.
+// The walk is a ValueSource: the configuration cache runs it again on every build and is dropped when
+// a module directory appears or goes, instead of reusing the old list of modules.
+abstract class ModuleDirectories : ValueSource<List<String>, ModuleDirectories.Parameters> {
+    interface Parameters : ValueSourceParameters {
+        val settingsDirectory: Property<String>
+        val modulesRoot: Property<String>
+        val areas: ListProperty<String>
+    }
+
+    override fun obtain(): List<String> {
+        val settingsDirectory = File(parameters.settingsDirectory.get())
+        val modulesRoot = settingsDirectory.resolve(parameters.modulesRoot.get())
+        return parameters.areas.get().map(modulesRoot::resolve).filter(File::exists).flatMap { area ->
+            area.walkTopDown()
+                .onEnter { directory -> directory.name != "build" && !directory.name.startsWith(".") }
+                .filter { it.isDirectory && it.resolve("build.gradle.kts").isFile }
+                .map { moduleDirectory -> ":" + moduleDirectory.relativeTo(settingsDirectory).invariantSeparatorsPath.replace('/', ':') }
+                .toList()
+        }.sorted()
+    }
+}
+
 run {
     fun property(name: String): String? = providers.gradleProperty(name).orNull?.trim()?.takeIf(String::isNotEmpty)
-    val root = property("app.modules.root")?.let(settingsDir::resolve) ?: settingsDir
     val areas = (property("app.modules.areas") ?: "apps,core,designsystem,features").split(',').map(String::trim)
-
-    areas.map(root::resolve).filter(File::exists).forEach { area ->
-        area.walkTopDown()
-            .onEnter { directory -> directory.name != "build" && !directory.name.startsWith(".") }
-            .filter { it.isDirectory && it.resolve("build.gradle.kts").isFile }
-            .forEach { moduleDirectory ->
-                include(":" + moduleDirectory.relativeTo(settingsDir).invariantSeparatorsPath.replace('/', ':'))
-            }
+    val modules = providers.of(ModuleDirectories::class.java) {
+        parameters.settingsDirectory.set(settingsDir.path)
+        parameters.modulesRoot.set(property("app.modules.root").orEmpty())
+        parameters.areas.set(areas)
     }
+    modules.get().forEach { modulePath -> include(modulePath) }
 }

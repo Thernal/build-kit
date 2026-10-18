@@ -2,7 +2,7 @@ import io.thernal.buildkit.buildlogic.flavor.nonProductionImplementation
 
 plugins {
     alias(libs.plugins.buildkit.compose)
-    alias(libs.plugins.buildkit.injection)
+    alias(libs.plugins.buildkit.graph)
 }
 
 kotlin {
@@ -18,7 +18,6 @@ kotlin {
         commonMain.dependencies {
             api(projects.fixture.features.greeting.api)
             implementation(projects.fixture.features.greeting.impl)
-            implementation(projects.fixture.features.greeting.wiring)
             // Resolved per invocation: absent from a production build's classpath altogether.
             nonProductionImplementation(projects.fixture.core.diagnostics)
         }

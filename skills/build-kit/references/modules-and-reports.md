@@ -19,6 +19,24 @@ overwritten. Put code in `domain`, `data` or `presentation` packages (Detekt's l
 The split: `api` holds contracts other modules may see; `impl` implements them and is seen only by
 `wiring`; `wiring` binds them into the application graph — an app depends on `wiring`, never on `impl`.
 
+## The app's graph
+
+The module that declares the Metro graph (`apps/<name>/shared`) applies `libs.plugins.<alias>.graph`
+instead of `injection`. It adds every `…:wiring` module outside `apps` — a module `create` makes joins the
+graph with no edit to the app — so the app's build file lists only what its own code imports (the
+`api` modules of the routes and contracts it opens; never an `impl`):
+
+```kotlin
+plugins {
+    alias(libs.plugins.<alias>.compose)
+    alias(libs.plugins.<alias>.graph)
+}
+```
+
+A wiring module that must stay out goes in `gradle.properties`, as a module path or a directory of them:
+`app.graph.exclude=:core:firebase` for every app (a capability not set up yet), `app.graph.client.exclude=
+:features:store` for one (another app's features). A path that names no module fails the build.
+
 ## Dependencies
 
 `implementation(...)` only, in every module that uses a type — the build fails on `api(...)`:

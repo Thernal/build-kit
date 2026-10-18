@@ -59,6 +59,10 @@ gradlePlugin {
             id = "io.thernal.buildkit.detekt"
             implementationClass = "io.thernal.buildkit.buildlogic.quality.DetektPipelinePlugin"
         }
+        register("graph") {
+            id = "io.thernal.buildkit.graph"
+            implementationClass = "io.thernal.buildkit.buildlogic.injection.GraphConventionPlugin"
+        }
         register("modules") {
             id = "io.thernal.buildkit.modules"
             implementationClass = "io.thernal.buildkit.buildlogic.modules.ModulesConventionPlugin"

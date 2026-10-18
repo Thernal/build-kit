@@ -90,6 +90,7 @@ dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 <alias>-kmp-library = { id = "io.thernal.buildkit.kmp.library" }
 <alias>-compose = { id = "io.thernal.buildkit.compose" }
 <alias>-injection = { id = "io.thernal.buildkit.injection" }
+<alias>-graph = { id = "io.thernal.buildkit.graph" }
 <alias>-kotlin-library = { id = "io.thernal.buildkit.kotlin.library" }
 <alias>-android-application = { id = "io.thernal.buildkit.android.application" }
 <alias>-environment = { id = "io.thernal.buildkit.environment" }
@@ -107,6 +108,8 @@ app.flavors.default=dev
 app.api.allowed=                               # modules exported into the iOS framework, if any
 app.modules.root=                              # "" = the repository root; never part of a package
 app.modules.areas=apps,core,designsystem,features
+app.graph.exclude=                             # optional: wiring paths no app's graph takes (:core:firebase)
+app.graph.<name>.exclude=                      # optional: the same for one app (:features:store in client)
 ```
 
 ## Other files

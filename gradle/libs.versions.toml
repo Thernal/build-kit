@@ -94,6 +94,7 @@ dependency-analysis = { id = "com.autonomousapps.dependency-analysis", version.r
 buildkit-kmp-library = { id = "io.thernal.buildkit.kmp.library" }
 buildkit-compose = { id = "io.thernal.buildkit.compose" }
 buildkit-injection = { id = "io.thernal.buildkit.injection" }
+buildkit-graph = { id = "io.thernal.buildkit.graph" }
 buildkit-kotlin-library = { id = "io.thernal.buildkit.kotlin.library" }
 buildkit-android-library = { id = "io.thernal.buildkit.android.library" }
 buildkit-android-application = { id = "io.thernal.buildkit.android.application" }

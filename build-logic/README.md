@@ -47,6 +47,22 @@ The exception is structural, not a preference: Kotlin/Native `export(...)` accep
 dependencies, and a module whose types Swift must see has to be exported into the framework. Those are
 named one by one in `app.api.allowed`; there is no pattern and no per-module switch.
 
+## The graph takes every wiring module
+
+Metro builds an application's graph from the binding containers on the graph module's classpath, so the
+list of `wiring` dependencies is the list of capabilities in the app. Kept by hand in every app it drifts:
+a new feature is forgotten, or the app grows `impl` and `api` dependencies its own code never reads
+(Metro needs neither — the containers' generated factories live in `wiring`, and Kotlin/Native takes every
+transitive klib). `graph` adds every `…:wiring` project outside `apps` instead; a new capability joins
+the graph by existing. What must stay out is said once, in `gradle.properties`: `app.graph.exclude` for a
+capability not set up yet, `app.graph.<app>.exclude` for another app's features. An exclusion that names
+no module fails the build, because a typo would silently keep the capability in.
+
+The list comes from the projects settings included, not from a second walk of the tree, so it can never
+name a project Gradle does not have. That walk runs in a `ValueSource`: the configuration cache checks its
+value on every build and is recomputed when a module directory appears or goes — without it, a cached
+configuration kept the old modules until something else invalidated it.
+
 ## One flavor per invocation
 
 The KMP Android library plugin has no product flavors, and iOS has no `BuildConfig`. Shared code is

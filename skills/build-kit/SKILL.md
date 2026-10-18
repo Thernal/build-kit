@@ -1,6 +1,6 @@
 ---
 name: build-kit
-description: Works on the Gradle build of apps that use build-kit, the convention-plugin kit for Compose Multiplatform or Android-only apps (plugins io.thernal.buildkit.kmp.library, .android.library, .compose, .injection, .android.application, .environment, .modules, .detekt; libs.plugins.buildkit.*; app.* keys in gradle.properties). Use it for any build work in such a project, even when build-kit is not named - creating api/impl/wiring modules, adding an app or a flavor, .env values and the generated Environment, flavor-only dependencies, signing and version codes, the Detekt pre-commit hook and its TODO markers, "api(...) is not used" errors, module and Compose stability reports, dependency analysis, make targets and store lanes; and failures such as "Requested tasks span several flavors" or a commit blocked by Detekt. Not for Gradle builds without build-kit.
+description: Works on the Gradle build of apps that use build-kit, the convention-plugin kit for Compose Multiplatform or Android-only apps (plugins io.thernal.buildkit.kmp.library, .android.library, .compose, .injection, .graph, .android.application, .environment, .modules, .detekt; libs.plugins.buildkit.*; app.* keys in gradle.properties). Use it for any build work in such a project, even when build-kit is not named - creating api/impl/wiring modules, which wiring modules join an app's graph, adding an app or a flavor, .env values and the generated Environment, flavor-only dependencies, signing and version codes, the Detekt pre-commit hook and its TODO markers, "api(...) is not used" errors, module and Compose stability reports, dependency analysis, make targets and store lanes; and failures such as "Requested tasks span several flavors" or a commit blocked by Detekt. Not for Gradle builds without build-kit.
 ---
 
 # build-kit
@@ -35,8 +35,13 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
 ## 2. The model
 
 - **Capabilities, not layers.** A module applies what it uses: `kmp.library` (every multiplatform
-  module), `compose` (UI), `injection` (Metro), `kotlin.library` (JVM tools), `android.application`
-  (each `apps/<name>/android`), `environment` (the one configuration module). Detekt comes with all of them.
+  module), `compose` (UI), `injection` (Metro), `graph` (the app's graph module), `kotlin.library` (JVM
+  tools), `android.application` (each `apps/<name>/android`), `environment` (the one configuration module).
+  Detekt comes with all of them.
+- **The graph takes every wiring.** An app's graph module (`apps/<name>/shared`) applies `graph`: Metro,
+  and every `…:wiring` module outside `apps`. Its build file names no `wiring`, no `impl` and no `api` but
+  the ones its own code imports. `app.graph.exclude` (all apps) and `app.graph.<name>.exclude` (one app)
+  keep module paths, or whole directories of them, out.
   `compose` also packages Compose Resources into the Android library target (`androidResources`), so
   `Res` works on Android without anything in the module's own build file.
 - **Android-only** (`app.platforms=android`): modules apply `android.library` (`kmp.library` fails);
@@ -66,6 +71,7 @@ already the project's. `skillctl.sh kit status build-kit` says what moved upstre
 |---|---|---|
 | install the kit, or fix a broken setup | settings, root build, catalog, properties | [setup.md](references/setup.md) |
 | new capability or module | `./gradlew create <name> api impl wiring`; one module: `./gradlew create core/common` | [modules-and-reports.md](references/modules-and-reports.md) |
+| a wiring module should not be in an app (not set up yet, another app's feature) | `app.graph.exclude` or `app.graph.<name>.exclude` in `gradle.properties` | [modules-and-reports.md](references/modules-and-reports.md) |
 | "declares api(...) dependencies" | `implementation` in every consumer; `app.api.allowed` only for framework exports | [modules-and-reports.md](references/modules-and-reports.md) |
 | new flavor, new app, new `.env` key, flavor-only dependency | properties + files, no convention edits | [flavors.md](references/flavors.md) |
 | flavor errors, wrong environment in a build | the detection order | [flavors.md](references/flavors.md) |
