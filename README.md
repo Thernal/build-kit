@@ -230,7 +230,8 @@ bundle exec fastlane ios testflight app:customer flavor:beta
 
 All of them read flavors and apps from `gradle.properties`. Firebase App Distribution belongs to firebase-kit;
 its Android path has a make target here, `make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa`
-(it calls firebase-kit's `scripts/distribute-firebase.sh`, and says so when that is not installed). A non-production
+(it calls firebase-kit's `scripts/distribute-firebase.sh`, and says so when that is not installed). Each build it
+sends gets the flavor's `versionCode` raised by one first; `NO_BUMP=1` keeps it. A non-production
 variant is signed with the shared debug keystore when `config/signing/debug/` exists, else with AGP's debug key,
 so the APK a tester receives always installs.
 

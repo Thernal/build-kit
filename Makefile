@@ -96,12 +96,13 @@ bump-version-code:
 # Builds one app's flavor and sends the APK to Firebase App Distribution (firebase-kit's
 # scripts/distribute-firebase.sh):
 #   make distribute-android APP=customer FLAVOR=beta BUILD_TYPE=release TESTER_GROUPS=qa
-# Also: TESTERS=a@b.c,d@e.f  NOTES="…"  BUMP=1 (versionCode +1, not committed)  NO_BUILD=1  DRY_RUN=1.
+# Every build sent gets versionCode +1 first (in the working tree, not committed); NO_BUMP=1 keeps it, and
+# NO_BUILD=1 and DRY_RUN=1 never bump. Also: TESTERS=a@b.c,d@e.f  NOTES="…".
 distribute-android:
 	@test -f scripts/distribute-firebase.sh || { echo "distribute-android needs firebase-kit (scripts/distribute-firebase.sh)" >&2; exit 1; }
 	scripts/distribute-firebase.sh android $(APP) $(FLAVOR) $(BUILD_TYPE) \
 		$(if $(TESTER_GROUPS),--groups "$(TESTER_GROUPS)") $(if $(TESTERS),--testers "$(TESTERS)") \
-		$(if $(NOTES),--notes "$(NOTES)") $(if $(BUMP),--bump) $(if $(NO_BUILD),--no-build) \
+		$(if $(NOTES),--notes "$(NOTES)") $(if $(NO_BUMP),--no-bump) $(if $(NO_BUILD),--no-build) \
 		$(if $(DRY_RUN),--dry-run)
 
 # ─── iOS ─────────────────────────────────────────────────────────────────────
