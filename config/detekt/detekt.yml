@@ -130,6 +130,18 @@ complexity:
       - 'kotlin.contracts.ContractBuilder.callsInPlace'
       - 'kotlin.Pair'
       - 'kotlin.Triple'
+      # Keys: key1/key2/key3 say nothing but their position.
+      - 'androidx.compose.runtime.LaunchedEffect'
+      - 'androidx.compose.runtime.DisposableEffect'
+      - 'androidx.compose.runtime.remember'
+      - 'androidx.compose.ui.input.pointer.pointerInput'
+      # Symmetric operands: a and b.
+      - 'kotlin.math.min'
+      - 'kotlin.math.max'
+      - 'kotlin.comparisons.minOf'
+      - 'kotlin.comparisons.maxOf'
+      # Positional flows: flow, flow2, …
+      - 'kotlinx.coroutines.flow.combine'
   NestedBlockDepth:
     active: true
     allowedDepth: 5
