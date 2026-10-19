@@ -79,7 +79,7 @@ make build-ios-framework APP=customer FLAVOR=prod                # :apps:custome
 make build-ios APP=customer FLAVOR=beta                          # apps/customer/ios, "Beta Release", scheme customer-Beta-Release
 make test test-ios detekt graph
 scripts/bump-version-code.sh customer beta                       # before a distributable build made by hand
-make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa # to Firebase App Distribution (firebase-kit's script), versionCode +1 first; NO_BUMP=1 DRY_RUN=1 TESTERS= NOTES=
+make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa # to Firebase App Distribution (firebase-kit's script), versionCode +1 first, committed once sent; NO_BUMP=1 NO_COMMIT=1 DRY_RUN=1 TESTERS= NOTES=
 scripts/deeplink.sh 'myapp://profile?id=42' customer dev          # adb, one device; ids as the build computes them
 scripts/deeplink.sh --ios 'myapp://profile?id=42'                # booted simulator
 ```
