@@ -65,7 +65,9 @@ depends on an `impl`/`wiring`), **Concrete hub** (≥3 dependants, mostly concre
 make those immutable, `@Immutable`/`@Stable`, or list them in `config/compose/stability.conf`. A run
 without metrics keeps the committed pages; the index shows `—` for them.
 
-`report/**/*.md` merges keeping one side; `.githooks/post-merge` regenerates the module report. Commit it.
+`report/**/*.md` merges keeping one side; `.githooks/post-merge` regenerates the module report and commits
+it on top of the merge (`chore(report): regenerate after merging <ref>`) — push that commit with the merge.
+After `git merge --squash` it is only staged and goes into the squash commit.
 
 ## Scripts and make
 

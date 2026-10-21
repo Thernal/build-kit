@@ -2,11 +2,13 @@
 
 # The module report is generated from the build files, so after a merge it is stale by definition:
 # the merge driver resolved it to one side without looking at the other. Regenerate it from the
-# merged build files and stage it, so the next commit carries a report that matches its modules.
+# merged build files and commit it on top of the merge, so the branch never carries a report that
+# does not match its modules.
 #
 # It cannot go into the merge commit itself. Git fixes that commit's tree before it runs any hook:
-# staging from prepare-commit-msg is ignored, and `git commit --amend` from here is refused while
-# the merge is still in progress.
+# staging from prepare-commit-msg is ignored, and amending from here would rewrite the pulled commit
+# whenever the merge was a fast-forward. A squash merge ($1 = 1) makes no commit, so there the report
+# is only staged and goes into the commit the developer makes next.
 
 set -uo pipefail
 
@@ -14,8 +16,14 @@ set -uo pipefail
 unset GIT_INDEX_FILE GIT_DIR GIT_WORK_TREE GIT_PREFIX GIT_OBJECT_DIRECTORY
 
 PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+SQUASH="${1:-0}"
 
-CHANGED="$(git diff --name-only ORIG_HEAD HEAD 2>/dev/null || true)"
+# A squash merge leaves HEAD where it was; what it merged is only in the index.
+if [ "$SQUASH" = "1" ]; then
+    CHANGED="$(git diff --cached --name-only HEAD 2>/dev/null || true)"
+else
+    CHANGED="$(git diff --name-only ORIG_HEAD HEAD 2>/dev/null || true)"
+fi
 if [ -z "$CHANGED" ]; then
     exit 0
 fi
@@ -29,9 +37,45 @@ if ! "$PROJECT_ROOT/gradlew" -p "$PROJECT_ROOT" graph --quiet; then
     exit 0
 fi
 
-if git -C "$PROJECT_ROOT" diff --quiet -- report; then
+# `status`, not `diff`: a page for an area seen for the first time is not tracked yet.
+if [ -z "$(git -C "$PROJECT_ROOT" status --porcelain -- report)" ]; then
     exit 0
 fi
 
 git -C "$PROJECT_ROOT" add -- report
-echo "graph: report/ regenerated from the merged build files and staged; commit it"
+
+if [ "$SQUASH" = "1" ]; then
+    echo "graph: report/ regenerated from the merged build files and staged; it goes into the squash commit"
+    exit 0
+fi
+
+# What was merged, for the subject: Git records it only in the reflog ("merge <ref>: …",
+# "pull <remote> <branch>: …"), options included.
+SOURCE="$(git -C "$PROJECT_ROOT" reflog -1 --format=%gs | cut -d: -f1 \
+    | awk '{ for (i = 2; i <= NF; i++) if ($i !~ /^-/) printf "%s%s", (n++ ? "/" : ""), $i }')"
+SUBJECT="chore(report): regenerate after merging $SOURCE"
+[ -n "$SOURCE" ] || SUBJECT="chore(report): regenerate after a merge"
+
+# Written with plumbing: `git commit` refuses while the merge state is still on disk, and Git removes it
+# only after this hook returns. A tree built in an index of its own keeps whatever else the developer
+# staged out of the commit, and no commit hook runs: the pre-commit one would check the developer's
+# unstaged Kotlin drafts for a commit that has none.
+commit_report() {
+    local scratch head tree commit
+    scratch="$(mktemp -d)" || return 1
+    head="$(git -C "$PROJECT_ROOT" rev-parse HEAD)" &&
+        GIT_INDEX_FILE="$scratch/index" git -C "$PROJECT_ROOT" read-tree "$head" &&
+        GIT_INDEX_FILE="$scratch/index" git -C "$PROJECT_ROOT" add -- report &&
+        tree="$(GIT_INDEX_FILE="$scratch/index" git -C "$PROJECT_ROOT" write-tree)" &&
+        commit="$(git -C "$PROJECT_ROOT" commit-tree "$tree" -p "$head" -m "$SUBJECT")" &&
+        git -C "$PROJECT_ROOT" update-ref -m "commit: $SUBJECT" HEAD "$commit" "$head"
+    local status=$?
+    rm -rf "$scratch"
+    return $status
+}
+
+if ! commit_report; then
+    echo "graph: report/ regenerated and staged, but committing it failed; commit it" >&2
+    exit 0
+fi
+echo "graph: report/ regenerated from the merged build files and committed: $SUBJECT"

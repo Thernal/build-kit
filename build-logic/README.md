@@ -119,7 +119,12 @@ scripts, so they are copied and updated with the kit instead of drifting in each
 `report/` is derived from the build — the module report from build files, the stability pages from
 compiler output — so a merge conflict in it is never a real disagreement. `.gitattributes` gives it a
 driver that keeps one side, and the post-merge hook regenerates the module report from the merged build
-files.
+files and commits it. A report that is only staged waits on someone to commit it and is easily pushed
+without; a commit of its own is the one place it can go, since Git fixes the merge commit's tree before
+any hook runs, and amending would rewrite a pulled commit after a fast-forward. The hook writes it with
+plumbing, because `git commit` refuses while the merge state is still on disk, and Git removes that state
+only after the hook returns. Plumbing also keeps the commit hooks out: the commit holds generated
+Markdown only, and the pre-commit hook would run Detekt over the developer's unstaged Kotlin drafts.
 
 Stability is reported per module for the same reason: one page per Compose module means a branch that
 changes one module changes one page, and each page is a cacheable task over that module's metrics alone.
