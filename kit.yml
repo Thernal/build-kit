@@ -67,3 +67,4 @@ requires:
   - the module that declares the Metro graph (apps/<name>/shared) applies <alias>.graph instead of <alias>.injection and lists no wiring, impl or unused api module
   - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/{android,ios,shared} per app with apps/<name>/version.properties, xcodegen for ios/project.yml, config/compose/stability.conf
   - ios/project.yml takes the version from ${APP_VERSION_NAME} and per flavor ${APP_VERSION_CODE_<FLAVOR>} into MARKETING_VERSION and CURRENT_PROJECT_VERSION, and Info.plist reads those (fixture/apps/customer/ios/project.yml); generated with make xcode-project
+  - store lanes - Ruby 3.4 and bundler 2.6.6; optional app.release.* keys in gradle.properties (README Releasing); a flavor uploaded to Play has app.flavors.<flavor>.idSuffix=none
