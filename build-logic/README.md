@@ -90,6 +90,20 @@ another environment, installed over the store's, which Android allows only under
 its release takes the production key. The production keystore never enters the repository; without it the production
 release is built unsigned, unless `-PrequireReleaseSigning=true` says a release is being cut.
 
+## Versions: the file for builds, the pipeline for releases
+
+`version.properties` keeps a counter per flavor because each flavor is its own store application and climbs
+at its own pace. A flavor on production's id is not: it uploads to production's application, so two counters
+would hand out the same number twice — it counts with production's. A store release takes its numbers from the
+pipeline instead (`-Papp.versionName`, `-Papp.versionCode`, the same in Xcode's build settings): one build number
+above everything either store holds, for both platforms, without a commit racing the release. The file stays
+the version of every other build.
+
+iOS reads the file at project generation, not at build time: Xcode resolves build settings before any build
+phase runs, so a script cannot set `MARKETING_VERSION`; xcodegen can, from the environment
+`scripts/xcode-project.sh` prepares. A project generated without it stops in its framework phase rather than
+shipping without a version.
+
 ## Detekt: never fail, block at commit
 
 A build that fails on findings is right for a codebase that starts clean and wrong for one that does
