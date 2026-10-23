@@ -38,6 +38,26 @@ require_app() {
   }
 }
 
+# The application id suffix of <flavor>, without the dot, as the build gives it: none for production and
+# for `app.flavors.<flavor>.idSuffix=none`, the override when one is set, else the flavor's name.
+id_suffix() {
+  local flavor="$1" override
+  [ "$flavor" = "$PRODUCTION_FLAVOR" ] && return 0
+  override="$(app_property "app.flavors.$flavor.idSuffix")"
+  override="${override#.}"
+  case "$override" in
+    none) ;;
+    '') echo "$flavor" ;;
+    *) echo "$override" ;;
+  esac
+}
+
+# The flavor whose versionCode <flavor> uses: production's for a flavor on production's id (the same store
+# application), its own otherwise.
+version_counter_flavor() {
+  if [ -n "$(id_suffix "$1")" ]; then echo "$1"; else echo "$PRODUCTION_FLAVOR"; fi
+}
+
 # The installed package of <app> in <flavor>: its Android module's own `applicationId = "…"` when it
 # sets one, else the convention's default (namespace + module path), plus `.<flavor>` off production.
 application_id() {
