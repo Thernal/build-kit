@@ -59,12 +59,14 @@ version_counter_flavor() {
 }
 
 # The installed package of <app> in <flavor>: its Android module's own `applicationId = "…"` when it
-# sets one, else the convention's default (namespace + module path), plus `.<flavor>` off production.
+# sets one, else the convention's default (namespace + module path below the modules root, `-` read as `.`),
+# plus the flavor's id suffix.
 application_id() {
-  local app="$1" flavor="$2" id
+  local app="$1" flavor="$2" id suffix
   id="$(sed -n 's/^[[:space:]]*applicationId[[:space:]]*=[[:space:]]*"\(.*\)".*/\1/p' "$APPS_DIR/$app/android/build.gradle.kts" | head -n1)"
   if [ -z "$id" ]; then
-    id="$NAMESPACE.${MODULES_ROOT:+$(echo "$MODULES_ROOT" | tr '/' '.').}apps.$(echo "$app" | tr -d '-').android"
+    id="$NAMESPACE.apps.$(echo "$app" | tr '-' '.' | tr -cd 'A-Za-z0-9_.' | tr -s '.').android"
   fi
-  [ "$flavor" = "$PRODUCTION_FLAVOR" ] && echo "$id" || echo "$id.$flavor"
+  suffix="$(id_suffix "$flavor")"
+  echo "$id${suffix:+.$suffix}"
 }
