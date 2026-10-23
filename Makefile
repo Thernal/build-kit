@@ -111,9 +111,10 @@ distribute-android:
 build-ios-framework:
 	$(GRADLE) $(IOS_FRAMEWORK_MODULE):link$(BUILD_TYPE_CAP)FrameworkIosArm64
 
-# The .xcodeproj is generated from ios/project.yml (xcodegen) when the app keeps one there.
+# The .xcodeproj is generated from ios/project.yml (xcodegen) when the app keeps one there, with the app's
+# version from version.properties (scripts/xcode-project.sh).
 xcode-project:
-	@if [ -f "$(IOS_DIR)/project.yml" ]; then cd "$(IOS_DIR)" && xcodegen generate --quiet; fi
+	@scripts/xcode-project.sh $(APP)
 
 # Xcode configurations and schemes are named after the flavor: "Beta Release", "<app>-Beta-Release".
 # The framework build phase reads the flavor back from CONFIGURATION (see Flavors in the README).
