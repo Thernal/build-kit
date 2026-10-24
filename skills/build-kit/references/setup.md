@@ -110,6 +110,7 @@ app.modules.root=                              # "" = the repository root; never
 app.modules.areas=apps,core,designsystem,features
 app.graph.exclude=                             # optional: wiring paths no app's graph takes (:core:firebase)
 app.graph.<name>.exclude=                      # optional: the same for one app (:features:store in client)
+app.kotlin.optIn=                              # optional: opt-ins every Kotlin module accepts (kotlin.time.ExperimentalTime)
 ```
 
 ## Other files

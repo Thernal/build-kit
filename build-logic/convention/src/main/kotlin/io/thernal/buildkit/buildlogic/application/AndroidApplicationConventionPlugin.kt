@@ -5,6 +5,7 @@ import io.thernal.buildkit.buildlogic.ANDROID_APPLICATION_PLUGIN
 import io.thernal.buildkit.buildlogic.COMPOSE_COMPILER_PLUGIN
 import io.thernal.buildkit.buildlogic.compose.configureComposeCompiler
 import io.thernal.buildkit.buildlogic.configureJavaToolchain
+import io.thernal.buildkit.buildlogic.configureKotlinCompiler
 import io.thernal.buildkit.buildlogic.defaultNamespace
 import io.thernal.buildkit.buildlogic.flavor.AppFlavors
 import io.thernal.buildkit.buildlogic.flavor.ENVIRONMENT_DIMENSION
@@ -42,6 +43,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         pluginManager.apply(ANDROID_APPLICATION_PLUGIN)
         pluginManager.apply(COMPOSE_COMPILER_PLUGIN)
         QualityConventionPlugin().apply(target)
+        configureKotlinCompiler()
         configureComposeCompiler()
 
         val catalog = libs
