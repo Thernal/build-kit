@@ -28,6 +28,9 @@ code:
   - scripts
   - Makefile
   - fastlane
+  - Gemfile
+  - Gemfile.lock
+  - .ruby-version
 
 # The public contract: the conventions' and rules' sources and the settings
 # script. When they move and `skill` has not moved since, the skill is reported
@@ -62,4 +65,6 @@ requires:
   - files .env.<flavor> per flavor at the root; gradle/gradle-daemon-jvm.properties with toolchainVersion=21 (Metro's Gradle plugin)
   - .gitattributes report/**/*.md merge=generated-report; .gitignore .misc/ and config/signing/release/
   - the module that declares the Metro graph (apps/<name>/shared) applies <alias>.graph instead of <alias>.injection and lists no wiring, impl or unused api module
-  - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/{android,ios,shared} per app with apps/<name>/version.properties, xcodegen for ios/project.yml, config/compose/stability.conf, a Gemfile with fastlane
+  - optional config/signing/debug/ (keystore.properties + keystore), apps/<name>/{android,ios,shared} per app with apps/<name>/version.properties, xcodegen for ios/project.yml, config/compose/stability.conf
+  - ios/project.yml takes the version from ${APP_VERSION_NAME} and per flavor ${APP_VERSION_CODE_<FLAVOR>} into MARKETING_VERSION and CURRENT_PROJECT_VERSION, and Info.plist reads those (fixture/apps/customer/ios/project.yml); generated with make xcode-project
+  - store lanes - Ruby 3.4 and bundler 2.6.6; optional app.release.* keys in gradle.properties (README Releasing); a flavor uploaded to Play has app.flavors.<flavor>.idSuffix=none

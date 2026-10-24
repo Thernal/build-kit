@@ -8,8 +8,9 @@
 #   make test
 #
 # Flavors, the production flavor and the apps come from gradle.properties (app.*), as they do for the
-# build. Store distribution is not here: fastlane/Fastfile holds the store lanes. Firebase App Distribution
-# belongs to firebase-kit; its Android target is distribute-android.
+# build. Store distribution is not here: fastlane/Fastfile holds the store lanes, which build through these
+# targets (test-fastlane tests their helpers). Firebase App Distribution belongs to firebase-kit; its Android
+# target is distribute-android.
 
 comma := ,
 space := $(empty) $(empty)
@@ -28,6 +29,7 @@ ANDROID_ARTIFACT_TYPE ?= auto
 ARTIFACT_PATH        ?= .misc/artifacts
 GRADLE_ARGS          ?=
 XCODEBUILD_ARGS      ?=
+RUBY                 ?= ruby
 
 capitalize = $(shell echo "$(1)" | awk '{ print toupper(substr($$0,1,1)) substr($$0,2) }')
 FLAVOR_CAP     := $(call capitalize,$(FLAVOR))
@@ -59,12 +61,12 @@ $(error Unsupported APP "$(APP)". Use one of: $(APPS))
 endif
 
 .PHONY: help build-android export-android verify-android-release bump-version-code distribute-android \
-        build-ios-framework build-ios build-ios-unsigned xcode-project test test-ios detekt graph
+        build-ios-framework build-ios build-ios-unsigned xcode-project test test-ios test-fastlane detekt graph
 
 help:
 	@echo "apps: $(APPS)   flavors: $(FLAVORS)   production: $(PRODUCTION_FLAVOR)"
 	@echo "targets: build-android export-android verify-android-release bump-version-code distribute-android"
-	@echo "         build-ios-framework build-ios build-ios-unsigned test test-ios detekt graph"
+	@echo "         build-ios-framework build-ios build-ios-unsigned test test-ios test-fastlane detekt graph"
 
 # ─── Android ─────────────────────────────────────────────────────────────────
 
@@ -111,9 +113,10 @@ distribute-android:
 build-ios-framework:
 	$(GRADLE) $(IOS_FRAMEWORK_MODULE):link$(BUILD_TYPE_CAP)FrameworkIosArm64
 
-# The .xcodeproj is generated from ios/project.yml (xcodegen) when the app keeps one there.
+# The .xcodeproj is generated from ios/project.yml (xcodegen) when the app keeps one there, with the app's
+# version from version.properties (scripts/xcode-project.sh).
 xcode-project:
-	@if [ -f "$(IOS_DIR)/project.yml" ]; then cd "$(IOS_DIR)" && xcodegen generate --quiet; fi
+	@scripts/xcode-project.sh $(APP)
 
 # Xcode configurations and schemes are named after the flavor: "Beta Release", "<app>-Beta-Release".
 # The framework build phase reads the flavor back from CONFIGURATION (see Flavors in the README).
@@ -136,6 +139,10 @@ test:
 
 test-ios:
 	$(GRADLE) iosSimulatorArm64Test
+
+# The store lanes' Ruby helpers (fastlane/lib): no fastlane, no network.
+test-fastlane:
+	$(RUBY) -Ifastlane/lib -e 'Dir["fastlane/test/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
 
 detekt:
 	./gradlew detektFull $(GRADLE_ARGS)

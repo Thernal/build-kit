@@ -47,9 +47,20 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         val catalog = libs
         val flavors = appFlavors()
         val appDirectory = appDirectory(projectDir)
-        val version = readAppVersion(appDirectory, flavors.all)
         val idSuffixes = flavors.nonProduction.associateWith { applicationIdSuffix(it) }
         val productionIdentity = listOf(flavors.production) + idSuffixes.filterValues { it == null }.keys
+        val version = readAppVersion(appDirectory, flavors.all) { flavor ->
+            if (flavor in productionIdentity) flavors.production else flavor
+        }.overriddenBy(
+            versionName = providers.gradleProperty(VERSION_NAME_PROPERTY).orNull,
+            versionCode = providers.gradleProperty(VERSION_CODE_PROPERTY).orNull,
+        )
+        version.ignoredKeys.forEach { key ->
+            logger.warn(
+                "${appDirectory.resolve(VERSION_PROPERTIES_FILE)}: $key is ignored — the flavor has " +
+                    "production's id and counts with ${flavors.production}.versionCode.",
+            )
+        }
         // Artifacts carry the app's name (`customer-beta-release.aab`), not the module's (`android`).
         extensions.configure<BasePluginExtension> { archivesName.set(appDirectory.name) }
 

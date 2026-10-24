@@ -121,8 +121,13 @@ app.graph.<name>.exclude=                      # optional: the same for one app 
 - `.gitignore`: `.misc/` and `config/signing/release/`.
 - `config/signing/debug/` (`keystore.properties` + keystore) to share one debug signature — optional.
 - `apps/<name>/{android,ios,shared}` per app (see README → Apps) and `apps/<name>/version.properties`
-  (`versionName=`, `<flavor>.versionCode=`) — optional, defaults apply. `xcodegen` for `ios/project.yml`.
-- A `Gemfile` with `gem "fastlane"` if the store lanes are used.
+  (`versionName=`, `<flavor>.versionCode=`) — optional, defaults apply. `xcodegen` for `ios/project.yml`, whose
+  `info.properties` read `$(MARKETING_VERSION)` / `$(CURRENT_PROJECT_VERSION)` and whose settings take them from
+  `${APP_VERSION_NAME}` and, per flavor's configurations, `${APP_VERSION_CODE_<FLAVOR>}` — copy
+  `fixture/apps/customer/ios/project.yml`; generate with `make xcode-project`.
+- For the store lanes: Ruby 3.4 (`.ruby-version`) with bundler 2.6.6 — `Gemfile` and `Gemfile.lock` come with
+  the kit (a conflict in `Gemfile.lock` on update: take either side, then `bundle lock`); `app.release.*` keys only
+  where a default does not fit (README → Releasing).
 
 ## Check
 

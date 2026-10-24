@@ -11,7 +11,8 @@ testing before a release, `prod` for production.
 
 **Adding a flavor:** add it to `app.flavors`, create `.env.<flavor>`, add `<flavor>.versionCode=1` to each
 `apps/*/version.properties` (optional — 1 is the default), and in each `apps/*/ios/project.yml` the
-`<Flavor> Debug` / `<Flavor> Release` configurations (with its `BUNDLE_ID_SUFFIX`) and the
+`<Flavor> Debug` / `<Flavor> Release` configurations (with its `BUNDLE_ID_SUFFIX` and
+`CURRENT_PROJECT_VERSION: ${APP_VERSION_CODE_<FLAVOR>}`) and the
 `<app>-<Flavor>-<BuildType>` schemes. No code
 in `build-logic/` changes. **Removing** one is the reverse; search for `flavorImplementation("<name>"`.
 
@@ -72,7 +73,8 @@ application module use AGP's own `regressImplementation(...)`, `prodImplementati
 
 Each `apps/<name>/` is an app — `android/` (with `libs.plugins.<alias>.android.application`), `ios/`
 (the Xcode project) and `shared/` (its KMP root). Per flavor: `versionCode` from the app's
-`version.properties`, `.<flavor>` application id suffix and `-<flavor>` version name suffix off
+`version.properties` (production's for an `idSuffix=none` flavor; `-Papp.versionCode` / `-Papp.versionName`
+override both for a store release), `.<flavor>` application id suffix and `-<flavor>` version name suffix off
 production, and every non-production variant is signed so a tester's build installs: with the shared debug
 keystore when `config/signing/debug/` exists, else with AGP's debug key. The
 production `release` variant is signed from `config/signing/release/` (never committed); without it it

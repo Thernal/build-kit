@@ -2,8 +2,10 @@
 # Bumps one app's versionCode for one flavor in <apps>/<app>/version.properties by 1.
 #
 # Each flavor is a separate application to the stores, so each keeps its own counter and climbs at the
-# pace it actually ships. versionName is not touched; change it by hand in the same file.
-# Run it right before building something distributable, so the artifact carries the new number.
+# pace it actually ships — except a flavor on production's id (`idSuffix=none`), which is production's
+# application and bumps production's counter. versionName is not touched; change it by hand in the same file.
+# Run it right before building something distributable, so the artifact carries the new number. Store
+# releases cut by the pipeline take their number from it instead (fastlane/Fastfile, -Papp.versionCode).
 #
 # Usage: scripts/bump-version-code.sh <app> <flavor>
 
@@ -20,7 +22,7 @@ require_app "$APP"
 require_flavor "$FLAVOR"
 
 VERSION_FILE="$APPS_DIR/$APP/version.properties"
-KEY="$FLAVOR.versionCode"
+KEY="$(version_counter_flavor "$FLAVOR").versionCode"
 CURRENT="$(sed -n "s/^$KEY=//p" "$VERSION_FILE" 2>/dev/null | head -n1)"
 [ -n "$CURRENT" ] || CURRENT=1   # the build's default when the key is missing
 

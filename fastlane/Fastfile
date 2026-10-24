@@ -1,67 +1,432 @@
-# Store lanes: Google Play and TestFlight. Building is `make`'s job (see Makefile), so a lane only
-# builds through it and uploads; flavors and apps come from gradle.properties, as for the build.
-# Firebase App Distribution lanes belong to firebase-kit, not here.
+require "securerandom"
+require "tmpdir"
+require_relative "lib/release_helpers"
+
+# Store lanes: the lanes a release pipeline calls, one set per channel. Building is `make`'s job (see Makefile),
+# so a lane builds through it and uploads. What is the project's — the apps, which flavor a channel ships, the
+# store ids, the Play track of closed testing, the rollout — is data in gradle.properties (app.flavors*,
+# app.release.*), the app's Android build file and ios/project.yml; README → Releasing has the keys.
 #
-#   bundle exec fastlane android play app:customer [track:internal]
-#   bundle exec fastlane ios testflight app:customer flavor:beta
+#   check_build_number           fails unless BUILD_NUMBER is above every build of the app in both stores
+#   android dev_apk              the dev APK (app.release.devApk), signed with the debug key
+#   <platform> beta_upload       the beta flavor to Play internal testing / TestFlight's internal group
+#   <platform> prod_upload       the production flavor to Play production as a draft / TestFlight, no group
+#   <platform> promote_closed    the beta build to closed testing (Play app.release.closedTrack / TESTFLIGHT_CLOSED_GROUP)
+#   <platform> promote_open      the production build to open testing (Play beta track / TESTFLIGHT_OPEN_GROUP)
+#   <platform> promote_production  Play: staged rollout (app.release.rollout); App Store: submitted, manual release
 #
-# Credentials come from the environment and never from the repository:
-#   GOOGLE_PLAY_JSON_KEY            service-account JSON (content) for the Play Developer API
-#   IOS_BUNDLE_ID_<APP>_<FLAVOR>    bundle id per app and flavor, e.g. IOS_BUNDLE_ID_CUSTOMER_BETA
-#   APP_STORE_CONNECT_API_KEY_PATH  App Store Connect API key (JSON) for upload and match
-#   MATCH_GIT_URL / MATCH_PASSWORD  match's certificate repository
+# Inputs are environment variables, never the repository; every *_FILE holds an absolute path:
+#   APP                                  the app (apps/<name>); optional when there is one
+#   VERSION_NAME, BUILD_NUMBER           X.Y.Z and the build number, the same on both platforms
+#   RELEASE_NOTES_FILE                   the notes; RELEASE_NOTES_OVERRIDE_FILE replaces them when not blank
+#   GOOGLE_PLAY_JSON_KEY_FILE            Play service account key
+#   ANDROID_KEYSTORE_FILE, ANDROID_KEYSTORE_PROPERTIES_FILE
+#                                        upload keystore, copied to config/signing/release/ for the build (a local
+#                                        run without them uses what is there)
+#   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_FILE                  App Store Connect API key
+#   MATCH_GIT_URL, MATCH_PASSWORD                            match's certificates repository
+#   MATCH_SSH_KEY_FILE, MATCH_KNOWN_HOSTS                    its deploy key and the host's known_hosts line(s); without
+#                                                            the key, git uses the machine's own ssh setup
+#   TESTFLIGHT_CLOSED_GROUP, TESTFLIGHT_OPEN_GROUP           external TestFlight groups
+#   BETA_REVIEW_CONTACT_EMAIL / _FIRST_NAME / _LAST_NAME / _PHONE, BETA_REVIEW_DEMO_USER_DEV / _PASSWORD_DEV
+#   (the beta build's backend), BETA_REVIEW_DEMO_USER_PROD / _PASSWORD_PROD   Beta App Review
+#
+# Firebase App Distribution lanes belong to firebase-kit (fastlane/FirebaseFastfile, imported by the app).
 
 ROOT = File.expand_path("..", __dir__)
+PLAY_TRACKS = %w[internal beta production].freeze # closed testing's track comes from app.release.closedTrack
 
-def app_property(key)
-  File.readlines(File.join(ROOT, "gradle.properties"))
-      .map(&:strip)
-      .select { |line| line.start_with?("#{key}=") }
-      .map { |line| line.split("=", 2).last.strip }
-      .last
+# ─── Shared ───────────────────────────────────────────────────────────────────
+
+# A required environment variable; fails early and names it.
+def env!(name)
+  value = ENV[name].to_s
+  UI.user_error!("Missing required environment variable #{name}") if value.strip.empty?
+  value
 end
 
-FLAVORS = app_property("app.flavors").to_s.split(",").map(&:strip)
-PRODUCTION = app_property("app.flavors.production") || FLAVORS.last
-ARTIFACTS = File.join(ROOT, ".misc/artifacts")
-
-def require_flavor(flavor)
-  UI.user_error!("Unknown flavor '#{flavor}'. Expected one of: #{FLAVORS.join(', ')}") unless FLAVORS.include?(flavor)
-  flavor
+# Runs a check from ReleaseHelpers, turning its ArgumentError into fastlane's user error.
+def checked
+  yield
+rescue ArgumentError => e
+  UI.user_error!(e.message)
 end
 
-default_platform(:android)
+def properties
+  @properties ||= ReleaseHelpers.read_properties(File.join(ROOT, "gradle.properties"))
+end
 
-platform :android do
-  desc "Builds the production app bundle of an app and uploads it to a Play track"
-  lane :play do |options|
-    app = options[:app] || UI.user_error!("Pass app:<name>")
-    sh("cd #{ROOT} && make build-android APP=#{app} FLAVOR=#{PRODUCTION} BUILD_TYPE=release")
-    upload_to_play_store(
-      track: options[:track] || "internal",
-      aab: Dir[File.join(ARTIFACTS, "android", "#{app}-#{PRODUCTION}-release*.aab")].first,
-      json_key_data: ENV.fetch("GOOGLE_PLAY_JSON_KEY"),
+def apps_dir
+  File.join(ROOT, [ReleaseHelpers.present(properties["app.modules.root"]), "apps"].compact.join("/"))
+end
+
+def release
+  @release ||= checked do
+    app = ReleaseHelpers.choose_app(ReleaseHelpers.list_apps(apps_dir), ENV["APP"])
+    ReleaseHelpers.release_config(
+      properties: properties,
+      app: app,
+      android_build_file: File.join(apps_dir, app, "android", "build.gradle.kts"),
+      ios_project_file: File.join(apps_dir, app, "ios", "project.yml")
     )
   end
 end
 
-platform :ios do
-  desc "Builds one flavor of an app's iOS side and uploads it to TestFlight"
-  lane :testflight do |options|
-    app = options[:app] || UI.user_error!("Pass app:<name>")
-    flavor = require_flavor(options[:flavor] || PRODUCTION)
-    configuration = "#{flavor.capitalize} Release"
-    api_key = app_store_connect_api_key(key_filepath: ENV.fetch("APP_STORE_CONNECT_API_KEY_PATH"))
+def version_name
+  checked { ReleaseHelpers.version_name!(env!("VERSION_NAME")) }
+end
 
-    match(type: "appstore", app_identifier: ENV.fetch("IOS_BUNDLE_ID_#{app.upcase.tr('-', '_')}_#{flavor.upcase}"), readonly: true, api_key: api_key)
-    sh("cd #{ROOT} && make build-ios-framework xcode-project APP=#{app} FLAVOR=#{flavor} BUILD_TYPE=release")
-    build_app(
-      project: Dir[File.join(ROOT, "**/apps/#{app}/ios/#{app}.xcodeproj")].first,
-      scheme: "#{app}-#{flavor.capitalize}-Release",
-      configuration: configuration,
-      export_method: "app-store",
-      output_directory: File.join(ARTIFACTS, "ios"),
+def build_number
+  checked { ReleaseHelpers.build_number!(env!("BUILD_NUMBER")) }
+end
+
+def checked_notes
+  text = ReleaseHelpers.release_notes(
+    saved_path: env!("RELEASE_NOTES_FILE"),
+    override_path: ENV["RELEASE_NOTES_OVERRIDE_FILE"]
+  )
+  checked { ReleaseHelpers.check_notes!(text) }
+  text
+end
+
+def notes_locale
+  release.setting("notesLocale")
+end
+
+def artifacts_dir
+  File.expand_path(ENV["ARTIFACT_PATH"] || ".misc/artifacts", ROOT)
+end
+
+# `make <args>` from the repository root, without a shell.
+def make(*args)
+  Dir.chdir(ROOT) { sh("make", *args.map(&:to_s)) }
+end
+
+def asc_api_key
+  app_store_connect_api_key(key_id: env!("ASC_KEY_ID"), issuer_id: env!("ASC_ISSUER_ID"), key_filepath: env!("ASC_KEY_FILE"))
+end
+
+def play_track_codes(package, track)
+  google_play_track_version_codes(package_name: package, track: track, json_key: env!("GOOGLE_PLAY_JSON_KEY_FILE"))
+end
+
+# ─── Build number check (no platform) ─────────────────────────────────────────
+
+desc "Fails when the notes are empty or too long for Google Play, or BUILD_NUMBER isn't above every build of the app in both stores"
+lane :check_build_number do
+  env!("GOOGLE_PLAY_JSON_KEY_FILE")
+  input = build_number
+  version_name
+  checked_notes
+  tracks = PLAY_TRACKS + [release.setting("closedTrack")]
+
+  play = release.release_flavors.map { |flavor| release.android_package(flavor) }.uniq.flat_map do |package|
+    tracks.flat_map { |track| play_track_codes(package, track) }
+  end
+  api_key = asc_api_key
+  testflight = release.release_flavors.map { |flavor| checked { release.ios_bundle(flavor) } }.uniq.map do |bundle|
+    latest_testflight_build_number(app_identifier: bundle, api_key: api_key, initial_build_number: 0).to_i
+  end
+  highest = (play + testflight).max.to_i
+
+  checked { ReleaseHelpers.check_build_number!(input: input, highest: highest) }
+  UI.success("#{release.app}: build number #{input} is above #{highest}")
+end
+
+# ─── Android ──────────────────────────────────────────────────────────────────
+platform :android do
+  # The upload keystore from the pipeline, in config/signing/release/ for the build only.
+  def with_release_keystore
+    keystore = ENV["ANDROID_KEYSTORE_FILE"].to_s
+    properties_file = ENV["ANDROID_KEYSTORE_PROPERTIES_FILE"].to_s
+    return yield if keystore.empty? && properties_file.empty?
+
+    directory = File.join(ROOT, "config/signing/release")
+    if File.exist?(File.join(directory, "keystore.properties"))
+      UI.user_error!("config/signing/release/ already has a keystore; unset ANDROID_KEYSTORE_* or move it away")
+    end
+    name = checked { ReleaseHelpers.keystore_file_name!(File.read(env!("ANDROID_KEYSTORE_PROPERTIES_FILE"))) }
+    created = !Dir.exist?(directory)
+    written = [File.join(directory, "keystore.properties"), File.join(directory, name)]
+    begin
+      FileUtils.mkdir_p(directory)
+      FileUtils.install(properties_file, written[0], mode: 0o600)
+      FileUtils.install(env!("ANDROID_KEYSTORE_FILE"), written[1], mode: 0o600)
+      yield
+    ensure
+      FileUtils.rm_f(written)
+      FileUtils.rmdir(directory) if created && Dir.exist?(directory) && Dir.empty?(directory)
+    end
+  end
+
+  # Play takes only bundles signed with the upload key, which build-kit gives production's id alone.
+  def require_release_signed!(flavor)
+    return if release.production_identity?(flavor)
+    UI.user_error!("#{flavor} has its own application id, so its release is signed with the debug key and Play " \
+                   "refuses it; give it production's id (app.flavors.#{flavor}.idSuffix=none) or ship another flavor")
+  end
+
+  # Builds the flavor's signed app bundle through make; returns its path.
+  def build_bundle(flavor)
+    output = Dir.mktmpdir("bundle")
+    with_release_keystore do
+      make("build-android", "APP=#{release.app}", "FLAVOR=#{flavor}", "BUILD_TYPE=release",
+           "ANDROID_ARTIFACT_TYPE=aab", "ARTIFACT_PATH=#{output}",
+           "GRADLE_ARGS=#{ReleaseHelpers.gradle_args(version_name: version_name, build_number: build_number)} " \
+           "-PrequireReleaseSigning=true")
+    end
+    bundles = Dir[File.join(output, "android", "*.aab")]
+    UI.user_error!("make built #{bundles.size} app bundles for #{flavor}, expected one") unless bundles.size == 1
+    bundles.first
+  end
+
+  # Runs the block with a temporary Play metadata dir holding this build's changelog.
+  def with_play_changelog(text)
+    Dir.mktmpdir("play-metadata") do |dir|
+      ReleaseHelpers.write_play_changelog(metadata_dir: dir, locale: notes_locale, version_code: build_number, text: text)
+      yield dir
+    end
+  end
+
+  # Builds and uploads unless BUILD_NUMBER is already on the track.
+  def android_upload(flavor:, track:, release_status:)
+    require_release_signed!(flavor)
+    text = checked_notes
+    package = release.android_package(flavor)
+    if play_track_codes(package, track).include?(build_number)
+      UI.message("build #{build_number} is already on #{package}'s #{track} track; nothing to upload")
+      return
+    end
+    aab = build_bundle(flavor)
+    with_play_changelog(text) do |metadata_dir|
+      upload_to_play_store(
+        package_name: package,
+        json_key: env!("GOOGLE_PLAY_JSON_KEY_FILE"),
+        track: track,
+        aab: aab,
+        release_status: release_status,
+        metadata_path: metadata_dir,
+        skip_upload_metadata: true,
+        skip_upload_images: true,
+        skip_upload_screenshots: true
+      )
+    end
+  end
+
+  # Moves an uploaded build (no bundle) from one track to another, with the changelog.
+  def android_promote(flavor:, from:, track:, release_status:, rollout: nil)
+    text = checked_notes
+    package = release.android_package(flavor)
+    checked do
+      ReleaseHelpers.check_promotable!(build_number: build_number, codes_on_track: play_track_codes(package, from.fetch(:track)),
+                                       track: from.fetch(:track), lane: "android #{from.fetch(:lane)}")
+    end
+    options = ReleaseHelpers.promote_options(
+      package_name: package,
+      json_key: env!("GOOGLE_PLAY_JSON_KEY_FILE"),
+      track: track,
+      build_number: build_number,
+      release_status: release_status,
+      rollout: rollout
     )
-    upload_to_testflight(api_key: api_key, skip_waiting_for_build_processing: true)
+    with_play_changelog(text) { |metadata_dir| upload_to_play_store(**options, metadata_path: metadata_dir) }
+  end
+
+  desc "The dev APK (app.release.devApk, release build signed with the debug key) into $ARTIFACT_PATH/android"
+  lane :dev_apk do
+    make("build-android", "APP=#{release.app}", "FLAVOR=#{release.dev_apk}", "BUILD_TYPE=release",
+         "ANDROID_ARTIFACT_TYPE=apk", "ARTIFACT_PATH=#{artifacts_dir}")
+    apk = File.join(artifacts_dir, "android", "#{release.app}-#{release.dev_apk}-release.apk")
+    UI.user_error!("make built no #{apk}") unless File.exist?(apk)
+    UI.success("dev APK: #{apk}")
+  end
+
+  desc "The beta flavor to Play internal testing"
+  lane :beta_upload do
+    android_upload(flavor: release.beta!, track: "internal", release_status: "completed")
+  end
+
+  desc "The production flavor to Play production as a draft (not rolled out)"
+  lane :prod_upload do
+    android_upload(flavor: release.production, track: "production", release_status: "draft")
+  end
+
+  desc "The beta build from internal testing to closed testing (app.release.closedTrack)"
+  lane :promote_closed do
+    android_promote(flavor: release.beta!, from: { track: "internal", lane: "beta_upload" },
+                    track: release.setting("closedTrack"), release_status: "completed")
+  end
+
+  desc "The production build to open testing"
+  lane :promote_open do
+    android_promote(flavor: release.production, from: { track: "production", lane: "prod_upload" },
+                    track: "beta", release_status: "completed")
+  end
+
+  desc "The production build to a staged rollout on Play production (app.release.rollout)"
+  lane :promote_production do
+    android_promote(flavor: release.production, from: { track: "production", lane: "prod_upload" },
+                    track: "production", release_status: "inProgress", rollout: release.setting("rollout"))
+  end
+end
+
+# ─── iOS ──────────────────────────────────────────────────────────────────────
+platform :ios do
+  def xcode_project
+    File.join(apps_dir, release.app, "ios", "#{release.app}.xcodeproj")
+  end
+
+  # Certificates through match in a throwaway keychain. With MATCH_SSH_KEY_FILE the clone uses only that key and
+  # MATCH_KNOWN_HOSTS (git_private_key is not passed: match would wrap git in ssh-agent and ssh would read ~/.ssh).
+  def with_match_keychain(bundle)
+    env!("MATCH_GIT_URL")
+    env!("MATCH_PASSWORD")
+    keychain = "release-#{SecureRandom.hex(6)}"
+    password = SecureRandom.hex(16)
+    previous_ssh = ENV["GIT_SSH_COMMAND"]
+    Dir.mktmpdir("match-ssh") do |dir|
+      create_keychain(name: keychain, password: password, default_keychain: false, unlock: true,
+                      timeout: 3600, add_to_search_list: true)
+      unless ENV["MATCH_SSH_KEY_FILE"].to_s.empty?
+        known_hosts = File.join(dir, "known_hosts")
+        File.write(known_hosts, "#{env!('MATCH_KNOWN_HOSTS').strip}\n")
+        ENV["GIT_SSH_COMMAND"] = ReleaseHelpers.match_ssh_command(key_file: env!("MATCH_SSH_KEY_FILE"), known_hosts_file: known_hosts)
+      end
+      match(type: "appstore", app_identifier: bundle, readonly: true, keychain_name: keychain, keychain_password: password)
+      ENV["GIT_SSH_COMMAND"] = previous_ssh
+      yield
+    ensure
+      ENV["GIT_SSH_COMMAND"] = previous_ssh
+      begin
+        delete_keychain(name: keychain)
+      rescue StandardError => e
+        UI.important("could not delete keychain #{keychain}: #{e.message}")
+      end
+    end
+  end
+
+  # distribute_build silently skips group names that don't exist, so fail naming them first.
+  # Needs asc_api_key first (it also authenticates Spaceship::ConnectAPI).
+  def ensure_testflight_groups!(bundle, groups)
+    return if groups.empty?
+    app = Spaceship::ConnectAPI::App.find(bundle)
+    UI.user_error!("App #{bundle} not found in App Store Connect") unless app
+    checked { ReleaseHelpers.check_groups!(wanted: groups, existing: app.get_beta_groups.map(&:name)) }
+  end
+
+  def ios_upload(flavor:, groups:)
+    notes_text = checked_notes
+    bundle = checked { release.ios_bundle(flavor) }
+    api_key = asc_api_key
+    ensure_testflight_groups!(bundle, groups)
+    uploaded = latest_testflight_build_number(app_identifier: bundle, api_key: api_key, version: version_name,
+                                              initial_build_number: 0)
+    if uploaded.to_i == build_number
+      UI.message("build #{build_number} of #{bundle} is already in TestFlight; nothing to upload")
+      unless groups.empty?
+        upload_to_testflight(app_identifier: bundle, api_key: api_key, distribute_only: true, app_version: version_name,
+                             build_number: build_number.to_s, groups: groups, submit_beta_review: false,
+                             changelog: notes_text)
+      end
+      return
+    end
+
+    # The Kotlin framework first: the keychain then stays unlocked for the Xcode build only.
+    make("build-ios-framework", "xcode-project", "APP=#{release.app}", "FLAVOR=#{flavor}", "BUILD_TYPE=release",
+         "GRADLE_ARGS=#{ReleaseHelpers.gradle_args(version_name: version_name, build_number: build_number)}")
+    configuration = "#{flavor.capitalize} Release"
+    with_match_keychain(bundle) do
+      update_code_signing_settings(
+        path: xcode_project,
+        targets: [release.app],
+        build_configurations: [configuration],
+        use_automatic_signing: false,
+        team_id: ENV["sigh_#{bundle}_appstore_team-id"],
+        profile_name: ENV["sigh_#{bundle}_appstore_profile-name"],
+        code_sign_identity: "Apple Distribution"
+      )
+      build_app(
+        project: xcode_project,
+        scheme: "#{release.app}-#{flavor.capitalize}-Release",
+        configuration: configuration,
+        export_method: "app-store",
+        output_directory: File.join(artifacts_dir, "ios"),
+        output_name: "#{release.app}-#{flavor}",
+        include_symbols: true,
+        xcargs: ReleaseHelpers.version_xcargs(version_name: version_name, build_number: build_number)
+      )
+    end
+    upload_to_testflight(app_identifier: bundle, api_key: api_key, changelog: notes_text, groups: groups,
+                         submit_beta_review: false, skip_waiting_for_build_processing: false)
+  end
+
+  # Submits an uploaded build to an external TestFlight group (Beta App Review).
+  def ios_promote_testflight(flavor:, group:, demo_user:, demo_password:)
+    notes_text = checked_notes
+    bundle = checked { release.ios_bundle(flavor) }
+    api_key = asc_api_key
+    ensure_testflight_groups!(bundle, [env!(group)])
+    upload_to_testflight(
+      app_identifier: bundle,
+      api_key: api_key,
+      distribute_only: true,
+      app_version: version_name,
+      build_number: build_number.to_s,
+      groups: [env!(group)],
+      distribute_external: true,
+      notify_external_testers: true,
+      changelog: notes_text,
+      beta_app_review_info: {
+        contact_email: env!("BETA_REVIEW_CONTACT_EMAIL"),
+        contact_first_name: env!("BETA_REVIEW_CONTACT_FIRST_NAME"),
+        contact_last_name: env!("BETA_REVIEW_CONTACT_LAST_NAME"),
+        contact_phone: env!("BETA_REVIEW_CONTACT_PHONE"),
+        demo_account_name: env!(demo_user),
+        demo_account_password: env!(demo_password),
+        demo_account_required: true
+      }
+    )
+  end
+
+  desc "The beta flavor to TestFlight, internal group (app.release.internalGroup)"
+  lane :beta_upload do
+    ios_upload(flavor: release.beta!, groups: [release.setting("internalGroup")])
+  end
+
+  desc "The production flavor to TestFlight, no group (assigned by a later promotion)"
+  lane :prod_upload do
+    ios_upload(flavor: release.production, groups: [])
+  end
+
+  desc "The beta build to the closed TestFlight group"
+  lane :promote_closed do
+    ios_promote_testflight(flavor: release.beta!, group: "TESTFLIGHT_CLOSED_GROUP",
+                           demo_user: "BETA_REVIEW_DEMO_USER_DEV", demo_password: "BETA_REVIEW_DEMO_PASSWORD_DEV")
+  end
+
+  desc "The production build to the open TestFlight group"
+  lane :promote_open do
+    ios_promote_testflight(flavor: release.production, group: "TESTFLIGHT_OPEN_GROUP",
+                           demo_user: "BETA_REVIEW_DEMO_USER_PROD", demo_password: "BETA_REVIEW_DEMO_PASSWORD_PROD")
+  end
+
+  desc "The production build to App Review for the App Store, manual release"
+  lane :promote_production do
+    notes_text = checked_notes
+    asc_api_key
+    deliver(
+      app_identifier: checked { release.ios_bundle(release.production) },
+      app_version: version_name,
+      build_number: build_number.to_s,
+      release_notes: { notes_locale => notes_text },
+      submit_for_review: true,
+      automatic_release: false,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: false,
+      force: true,
+      run_precheck_before_submit: false,
+      submission_information: { add_id_info_uses_idfa: false }
+    )
   end
 end

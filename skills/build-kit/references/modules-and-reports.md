@@ -79,16 +79,34 @@ make build-android APP=customer FLAVOR=beta BUILD_TYPE=release   # → .misc/art
 make verify-android-release APP=customer FLAVOR=prod             # minified, mapping present
 make build-ios-framework APP=customer FLAVOR=prod                # :apps:customer:shared
 make build-ios APP=customer FLAVOR=beta                          # apps/customer/ios, "Beta Release", scheme customer-Beta-Release
-make test test-ios detekt graph
-scripts/bump-version-code.sh customer beta                       # before a distributable build made by hand
+make xcode-project APP=customer                                  # project.yml → .xcodeproj with version.properties' version
+make test test-ios test-fastlane detekt graph                    # test-fastlane: the store lanes' Ruby helpers
+scripts/bump-version-code.sh customer beta                       # before a distributable build made by hand; an idSuffix=none flavor bumps production's code
 make distribute-android APP=customer FLAVOR=beta TESTER_GROUPS=qa # to Firebase App Distribution (firebase-kit's script), versionCode +1 first, committed once sent; NO_BUMP=1 NO_COMMIT=1 DRY_RUN=1 TESTERS= NOTES=
 scripts/deeplink.sh 'myapp://profile?id=42' customer dev          # adb, one device; ids as the build computes them
 scripts/deeplink.sh --ios 'myapp://profile?id=42'                # booted simulator
 ```
 
-## Store lanes
+## Store lanes (the release pipeline)
 
-`fastlane/Fastfile`: `fastlane android play app:<name> [track:internal]` (production app bundle to Google
-Play) and `fastlane ios testflight app:<name> flavor:<flavor>`. Credentials come from the environment only —
-`GOOGLE_PLAY_JSON_KEY`, `IOS_BUNDLE_ID_<APP>_<FLAVOR>`, `APP_STORE_CONNECT_API_KEY_PATH`, match's
-`MATCH_GIT_URL`/`MATCH_PASSWORD`. Firebase App Distribution is firebase-kit's; `make distribute-android` is its Android entry here.
+`fastlane/Fastfile` holds the lanes the shared GitLab pipeline's mobile flow calls (README → Releasing):
+`check_build_number`, `android dev_apk`, and per platform `beta_upload`, `prod_upload`, `promote_closed`,
+`promote_open`, `promote_production`. They build through `make`; the pure-Ruby part is `fastlane/lib/release_helpers.rb`
+with tests in `fastlane/test` (`make test-fastlane`). Ruby `.ruby-version` (3.4), bundler 2.6.6, `Gemfile.lock`.
+
+- **Inputs are environment variables** (`fastlane/.env.example`): `APP` when there are several apps, `VERSION_NAME`
+  (X.Y.Z), `BUILD_NUMBER`, `RELEASE_NOTES_FILE`, the Play and App Store Connect keys, the upload keystore
+  (`ANDROID_KEYSTORE_FILE` / `ANDROID_KEYSTORE_PROPERTIES_FILE`, copied into `config/signing/release/` for the
+  build), match (`MATCH_SSH_KEY_FILE` needs `MATCH_KNOWN_HOSTS`), TestFlight groups, Beta App Review.
+- **The project's choices are `app.release.*` keys** in `gradle.properties`, each optional and overridable for one
+  app as `app.release.<app>.<key>`: `devApk`, `beta`, `production` (channel → flavor), `closedTrack`, `rollout`,
+  `internalGroup`, `notesLocale`, `iosBundleId`. Put a project's difference there — never in the Fastfile, which a
+  kit update replaces.
+- **Versions:** the lanes pass `-Papp.versionName` / `-Papp.versionCode` to Gradle and `MARKETING_VERSION` /
+  `CURRENT_PROJECT_VERSION` to Xcode; `version.properties` is untouched by a release.
+- **Play takes only production's id:** a flavor uploaded there needs `app.flavors.<flavor>.idSuffix=none`; the lane
+  refuses another (it would be debug-signed).
+- Promotions move the uploaded build; on Play only one found on its upload lane's track (`internal` for
+  `promote_closed`, `production` for the others).
+- Firebase App Distribution is firebase-kit's (`fastlane/FirebaseFastfile`, imported by the app); `make
+  distribute-android` is its Android entry here.
