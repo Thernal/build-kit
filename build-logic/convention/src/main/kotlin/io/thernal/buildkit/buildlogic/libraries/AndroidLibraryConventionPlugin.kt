@@ -3,6 +3,7 @@ package io.thernal.buildkit.buildlogic.libraries
 import com.android.build.api.dsl.LibraryExtension
 import io.thernal.buildkit.buildlogic.ANDROID_LIBRARY_PLUGIN
 import io.thernal.buildkit.buildlogic.configureJavaToolchain
+import io.thernal.buildkit.buildlogic.configureKotlinCompiler
 import io.thernal.buildkit.buildlogic.defaultNamespace
 import io.thernal.buildkit.buildlogic.intVersion
 import io.thernal.buildkit.buildlogic.libs
@@ -31,6 +32,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
         // itself, and applying the standalone plugin on top of it is an error.
         pluginManager.apply(ANDROID_LIBRARY_PLUGIN)
         QualityConventionPlugin().apply(target)
+        configureKotlinCompiler()
 
         val catalog = libs
         val jvm = catalog.intVersion("jvm")

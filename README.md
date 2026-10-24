@@ -112,6 +112,10 @@ plugins {
 }
 ```
 
+Opt-ins are the application's, not a module's: `app.kotlin.optIn` in `gradle.properties` (comma-separated,
+`kotlin.time.ExperimentalTime,kotlinx.coroutines.ExperimentalCoroutinesApi`) reaches every Kotlin compilation of
+every convention, so no file repeats `@OptIn` for them.
+
 ### Android-only applications
 
 `app.platforms=android` in `gradle.properties` builds an application with no iOS app and no shared

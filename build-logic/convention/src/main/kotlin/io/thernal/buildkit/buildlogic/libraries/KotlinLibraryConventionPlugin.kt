@@ -1,6 +1,7 @@
 package io.thernal.buildkit.buildlogic.libraries
 
 import io.thernal.buildkit.buildlogic.KOTLIN_JVM_PLUGIN
+import io.thernal.buildkit.buildlogic.configureKotlinCompiler
 import io.thernal.buildkit.buildlogic.intVersion
 import io.thernal.buildkit.buildlogic.libs
 import io.thernal.buildkit.buildlogic.library
@@ -19,6 +20,7 @@ class KotlinLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply(KOTLIN_JVM_PLUGIN)
         QualityConventionPlugin().apply(target)
+        configureKotlinCompiler()
 
         val catalog = libs
         extensions.configure<KotlinJvmProjectExtension> {

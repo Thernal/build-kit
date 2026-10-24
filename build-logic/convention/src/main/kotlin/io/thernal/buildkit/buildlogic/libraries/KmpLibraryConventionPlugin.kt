@@ -3,6 +3,7 @@ package io.thernal.buildkit.buildlogic.libraries
 import com.android.build.api.dsl.KotlinMultiplatformAndroidLibraryTarget
 import io.thernal.buildkit.buildlogic.KOTLIN_MULTIPLATFORM_PLUGIN
 import io.thernal.buildkit.buildlogic.PLATFORMS_PROPERTY
+import io.thernal.buildkit.buildlogic.configureKotlinCompiler
 import io.thernal.buildkit.buildlogic.defaultNamespace
 import io.thernal.buildkit.buildlogic.intVersion
 import io.thernal.buildkit.buildlogic.isAndroidOnly
@@ -36,6 +37,7 @@ class KmpLibraryConventionPlugin : Plugin<Project> {
         pluginManager.apply(KOTLIN_MULTIPLATFORM_PLUGIN)
         pluginManager.apply("com.android.kotlin.multiplatform.library")
         QualityConventionPlugin().apply(target)
+        configureKotlinCompiler()
 
         val catalog = libs
         val namespace = defaultNamespace()
