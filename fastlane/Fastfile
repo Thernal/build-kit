@@ -21,8 +21,8 @@ require_relative "lib/release_helpers"
 #   RELEASE_NOTES_FILE                   the notes; RELEASE_NOTES_OVERRIDE_FILE replaces them when not blank
 #   GOOGLE_PLAY_JSON_KEY_FILE            Play service account key
 #   ANDROID_KEYSTORE_FILE, ANDROID_KEYSTORE_PROPERTIES_FILE
-#                                        upload keystore, copied to config/signing/release/ for the build (a local
-#                                        run without them uses what is there)
+#                                        upload keystore, copied to config/signing/release/<app>/ for the build (a
+#                                        local run without them uses what is there)
 #   ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_FILE                  App Store Connect API key
 #   MATCH_GIT_URL, MATCH_PASSWORD                            match's certificates repository
 #   MATCH_SSH_KEY_FILE, MATCH_KNOWN_HOSTS                    its deploy key and the host's known_hosts line(s); without
@@ -135,18 +135,21 @@ end
 
 # ─── Android ──────────────────────────────────────────────────────────────────
 platform :android do
-  # The upload keystore from the pipeline, in config/signing/release/ for the build only.
+  # The upload keystore from the pipeline, in config/signing/release/<app>/ for the build only: the build reads an
+  # app's own folder before the shared config/signing/release/ (Signing.kt).
   def with_release_keystore
     keystore = ENV["ANDROID_KEYSTORE_FILE"].to_s
     properties_file = ENV["ANDROID_KEYSTORE_PROPERTIES_FILE"].to_s
     return yield if keystore.empty? && properties_file.empty?
 
-    directory = File.join(ROOT, "config/signing/release")
+    shared = File.join(ROOT, "config/signing/release")
+    directory = File.join(shared, release.app)
     if File.exist?(File.join(directory, "keystore.properties"))
-      UI.user_error!("config/signing/release/ already has a keystore; unset ANDROID_KEYSTORE_* or move it away")
+      UI.user_error!("config/signing/release/#{release.app}/ already has a keystore; unset ANDROID_KEYSTORE_* or " \
+                     "move it away")
     end
     name = checked { ReleaseHelpers.keystore_file_name!(File.read(env!("ANDROID_KEYSTORE_PROPERTIES_FILE"))) }
-    created = !Dir.exist?(directory)
+    created = [shared, directory].reject { |path| Dir.exist?(path) }
     written = [File.join(directory, "keystore.properties"), File.join(directory, name)]
     begin
       FileUtils.mkdir_p(directory)
@@ -155,7 +158,7 @@ platform :android do
       yield
     ensure
       FileUtils.rm_f(written)
-      FileUtils.rmdir(directory) if created && Dir.exist?(directory) && Dir.empty?(directory)
+      created.reverse_each { |path| FileUtils.rmdir(path) if Dir.exist?(path) && Dir.empty?(path) }
     end
   end
 

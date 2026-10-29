@@ -255,7 +255,7 @@ Credentials never enter the repository; examples of their shape do:
 | Example | Real file | Holds |
 |---|---|---|
 | `fastlane/.env.example` | `fastlane/.env` (git-ignored), or CI variables | the store lanes' inputs: app, version, notes, Play and App Store Connect keys, upload keystore, match, TestFlight groups |
-| `config/signing/keystore.properties.example` | `config/signing/debug/keystore.properties` (committed, with the shared debug keystore) and `config/signing/release/keystore.properties` (git-ignored; CI writes it) | the keystore file, alias and passwords |
+| `config/signing/keystore.properties.example` | `config/signing/debug/keystore.properties` (committed, with the shared debug keystore) and `config/signing/release/keystore.properties`, or one app's own in `config/signing/release/<app>/` (git-ignored; CI writes it) | the keystore file, alias and passwords |
 
 ## Releasing
 

@@ -73,7 +73,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
             configureEnvironmentFlavors(flavors, version, idSuffixes, sharedDebugSigning)
         }
         configureJavaToolchain(catalog.intVersion("jvm"))
-        configureProductionReleaseSigning(productionIdentity)
+        configureProductionReleaseSigning(productionIdentity, appDirectory.name)
     }
 }
 

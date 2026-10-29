@@ -96,8 +96,8 @@ with tests in `fastlane/test` (`make test-fastlane`). Ruby `.ruby-version` (3.4)
 
 - **Inputs are environment variables** (`fastlane/.env.example`): `APP` when there are several apps, `VERSION_NAME`
   (X.Y.Z), `BUILD_NUMBER`, `RELEASE_NOTES_FILE`, the Play and App Store Connect keys, the upload keystore
-  (`ANDROID_KEYSTORE_FILE` / `ANDROID_KEYSTORE_PROPERTIES_FILE`, copied into `config/signing/release/` for the
-  build), match (`MATCH_SSH_KEY_FILE` needs `MATCH_KNOWN_HOSTS`), TestFlight groups, Beta App Review.
+  (`ANDROID_KEYSTORE_FILE` / `ANDROID_KEYSTORE_PROPERTIES_FILE`, copied into `config/signing/release/<app>/` for
+  the build), match (`MATCH_SSH_KEY_FILE` needs `MATCH_KNOWN_HOSTS`), TestFlight groups, Beta App Review.
 - **The project's choices are `app.release.*` keys** in `gradle.properties`, each optional and overridable for one
   app as `app.release.<app>.<key>`: `devApk`, `beta`, `production` (channel → flavor), `closedTrack`, `rollout`,
   `internalGroup`, `notesLocale`, `iosBundleId`. Put a project's difference there — never in the Fastfile, which a
