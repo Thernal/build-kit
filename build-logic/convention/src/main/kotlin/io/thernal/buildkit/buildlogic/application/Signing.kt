@@ -39,17 +39,20 @@ internal fun ApplicationExtension.configureSharedDebugSigning(rootDirectory: Fil
 }
 
 /**
- * The production keystore stays outside the repository (`config/signing/release/` is git-ignored).
- * It signs only the `release` variant of [flavors] — the production flavor and those sharing its
- * application id — (flavor, build type) pairs the flavor and build type DSL blocks cannot address,
- * hence the variant API. Without it those variants build unsigned, unless
+ * The production keystore stays outside the repository (`config/signing/release/` is git-ignored):
+ * the app's own in `config/signing/release/<app>/`, else the shared one in `config/signing/release/`
+ * ([releaseSigningDirectory]). It signs only the `release` variant of [flavors] — the production
+ * flavor and those sharing its application id — (flavor, build type) pairs the flavor and build type
+ * DSL blocks cannot address, hence the variant API. Without it those variants build unsigned, unless
  * [REQUIRE_RELEASE_SIGNING_PROPERTY] says a release is being cut.
  */
-internal fun Project.configureProductionReleaseSigning(flavors: List<String>) {
-    val directory = rootDir.resolve(RELEASE_SIGNING_DIRECTORY)
-    if (!directory.resolve(KEYSTORE_PROPERTIES).isFile) {
+internal fun Project.configureProductionReleaseSigning(flavors: List<String>, appName: String) {
+    val directory = releaseSigningDirectory(rootDir, appName)
+    if (directory == null) {
         val variants = flavors.joinToString { "${it}Release" }
-        val message = "$path: no ${directory.resolve(KEYSTORE_PROPERTIES)}; $variants stays unsigned"
+        val shared = rootDir.resolve(RELEASE_SIGNING_DIRECTORY)
+        val message = "$path: no $KEYSTORE_PROPERTIES in ${shared.resolve(appName)} or $shared; " +
+            "$variants stays unsigned"
         if (providers.gradleProperty(REQUIRE_RELEASE_SIGNING_PROPERTY).orNull == "true") {
             throw GradleException(message)
         }
@@ -67,6 +70,16 @@ internal fun Project.configureProductionReleaseSigning(flavors: List<String>) {
             onVariants(selector) { variant -> variant.signingConfig.setConfig(release) }
         }
     }
+}
+
+/**
+ * Where an app's production keystore is: `config/signing/release/<app>/` when it holds one — a
+ * repository that ships several apps signs each with its own key — else `config/signing/release/`,
+ * shared by every app; null when neither has a `keystore.properties`.
+ */
+internal fun releaseSigningDirectory(rootDirectory: File, appName: String): File? {
+    val shared = rootDirectory.resolve(RELEASE_SIGNING_DIRECTORY)
+    return listOf(shared.resolve(appName), shared).firstOrNull { it.resolve(KEYSTORE_PROPERTIES).isFile }
 }
 
 private fun ApkSigningConfig.loadFrom(directory: File) {

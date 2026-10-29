@@ -88,7 +88,9 @@ that registered. Non-production release builds use it too, so a beta can be inst
 without a store. A flavor with `idSuffix=none` is the exception: it is the production app built for
 another environment, installed over the store's, which Android allows only under the same signature, so
 its release takes the production key. The production keystore never enters the repository; without it the production
-release is built unsigned, unless `-PrequireReleaseSigning=true` says a release is being cut.
+release is built unsigned, unless `-PrequireReleaseSigning=true` says a release is being cut. A repository that ships
+several apps keeps each app's key in `config/signing/release/<app>/`, read before the shared `config/signing/release/`:
+the store ties every application to its first upload key, so one app's key must never sign another by default.
 
 ## Versions: the file for builds, the pipeline for releases
 

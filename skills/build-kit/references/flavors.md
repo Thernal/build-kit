@@ -77,8 +77,9 @@ Each `apps/<name>/` is an app — `android/` (with `libs.plugins.<alias>.android
 override both for a store release), `.<flavor>` application id suffix and `-<flavor>` version name suffix off
 production, and every non-production variant is signed so a tester's build installs: with the shared debug
 keystore when `config/signing/debug/` exists, else with AGP's debug key. The
-production `release` variant is signed from `config/signing/release/` (never committed); without it it
-stays unsigned unless `-PrequireReleaseSigning=true`.
+production `release` variant is signed from `config/signing/release/<app>/` when the app has its own keystore, else
+from `config/signing/release/` (both never committed); without one it stays unsigned unless
+`-PrequireReleaseSigning=true`.
 
 `app.flavors.<flavor>.idSuffix=<suffix>` gives a flavor another suffix (a staging build on the dev app);
 `idSuffix=none` gives it production's id — a beta testers install over the store app — and its release is
