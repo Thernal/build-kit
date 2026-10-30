@@ -116,6 +116,11 @@ Opt-ins are the application's, not a module's: `app.kotlin.optIn` in `gradle.pro
 `kotlin.time.ExperimentalTime,kotlinx.coroutines.ExperimentalCoroutinesApi`) reaches every Kotlin compilation of
 every convention, so no file repeats `@OptIn` for them.
 
+Every Kotlin compilation also runs the unused return value checker (`-Xreturn-value-checker=check`, off by
+default in Kotlin 2.4): a dropped value of a `@MustUseReturnValues` declaration — a repository returning `Result`,
+arch-kit's `safeCall` — or of most of the standard library is a compiler warning. `val _ = call()` drops one on
+purpose (conventions-kit rule `kotlin-features`).
+
 ### Android-only applications
 
 `app.platforms=android` in `gradle.properties` builds an application with no iOS app and no shared
